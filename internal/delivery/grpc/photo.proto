@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package photo;
+
+option go_package = ".";
+
+service AiService{
+  rpc UpdatePhoto(UpdatePhotoRequest) returns (UpdatePhotoResponse) ;
+}
+
+message UpdatePhotoRequest{
+  string id = 1;
+
+  string url = 2;
+}
+
+message UpdatePhotoResponse{
+  int64 status = 1;
+  string error = 2;
+}
