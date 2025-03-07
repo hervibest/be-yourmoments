@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package photo;
+
+option go_package = ".pkg/pb";
+
+service PhotoService{
+  rpc UpdatePhotographerPhoto(UpdatePhotographerPhotoRequest) returns (UpdatePhotographerPhotoResponse);
+  rpc UpdateFaceRecogPhoto (UpdateFaceRecogPhotoRequest) returns (UpdateFaceRecogPhotoResponse);  
+}
+
+message UpdatePhotographerPhotoRequest {
+  string id = 1;
+  repeated string user_id = 2; // Gunakan repeated untuk array
+}
+
+message UpdatePhotographerPhotoResponse {
+  int64 status = 1;
+  string error = 2;
+}
+
+message UpdateFaceRecogPhotoRequest {
+  string id = 1;
+  repeated string photo_id = 2; // Gunakan repeated untuk array
+}
+
+message UpdateFaceRecogPhotoResponse {
+  int64 status = 1;
+  string error = 2;
+}
