@@ -1,8 +1,8 @@
 package grpc
 
 import (
-	"be-yourmoments/photo-svc/internal/pb"
-	"be-yourmoments/photo-svc/internal/usecase"
+	"be-yourmoments/transaction-svc/internal/pb"
+	"be-yourmoments/transaction-svc/internal/usecase"
 	"context"
 
 	"google.golang.org/grpc"
