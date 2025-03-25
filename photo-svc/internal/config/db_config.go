@@ -3,61 +3,57 @@ package config
 import (
 	logs "be-yourmoments/photo-svc/internal/helper/logger"
 	"be-yourmoments/photo-svc/internal/helper/utils"
+	"log"
 
-	"context"
 	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
+
+	"github.com/jmoiron/sqlx"
 )
 
 var (
-	host               = utils.GetEnv("DB_HOST")
-	port               = utils.GetEnv("DB_PORT")
-	username           = utils.GetEnv("DB_USERNAME")
-	password           = utils.GetEnv("DB_PASSWORD")
-	dbName             = utils.GetEnv("DB_NAME")
-	minConns           = utils.GetEnv("DB_MIN_CONNS")
-	maxConns           = utils.GetEnv("DB_MAX_CONNS")
-	TimeOutDuration, _ = strconv.Atoi(utils.GetEnv("DB_CONNECTION_TIMEOUT"))
+	dbHost    = utils.GetEnv("DB_HOST")
+	dbPort    = utils.GetEnv("DB_PORT")
+	dbUser    = utils.GetEnv("DB_USERNAME")
+	dbPass    = utils.GetEnv("DB_PASSWORD")
+	dbSSLMode = utils.GetEnv("DB_SSLMODE")
+	dbName    = utils.GetEnv("DB_NAME")
+	minConns  = utils.GetEnv("DB_MIN_CONNS")
+	maxConns  = utils.GetEnv("DB_MAX_CONNS")
+	// TimeOutDuration, _ = strconv.Atoi(utils.GetEnv("DB_CONNECTION_TIMEOUT"))
+	maxIdleTime = utils.GetEnv("DB_MAX_IDLE_TIME")
+	timeZone    = utils.GetEnv("TZ")
 )
 
-func NewPostgresDatabase() *pgxpool.Pool {
+func NewPostgresDatabase() *sqlx.DB {
 	logger := logs.New("database_connection")
-	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", username, password, host, port, dbName)
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s&timezone=%s", dbUser, dbPass, dbHost, dbPort, dbName, dbSSLMode, timeZone)
 
-	poolConfig, err := pgxpool.ParseConfig(dsn)
+	db, err := sqlx.Connect("pgx", dsn)
 	if err != nil {
-		logger.Error("Failed to parse configuration dsn " + dsn)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	minConnsInt, err := strconv.Atoi(minConns)
-	if err != nil {
-		logger.Error("DB_MIN_CONNS expected to be integer minimum connections " + minConns)
+	if minConns != "" {
+		if v, err := strconv.Atoi(minConns); err == nil {
+			db.SetMaxIdleConns(v)
+		}
 	}
-	maxConnsInt, err := strconv.Atoi(maxConns)
-	if err != nil {
-		logger.Error("DB_MAX_CONNS expected to be integer maximum connections" + maxConns)
+	if maxConns != "" {
+		if v, err := strconv.Atoi(maxConns); err == nil {
+			db.SetMaxOpenConns(v)
+		}
 	}
-
-	poolConfig.MinConns = int32(minConnsInt)
-	poolConfig.MaxConns = int32(maxConnsInt)
-	poolConfig.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeDescribeExec
-
-	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
-	if err != nil {
-		logger.Error("Failed to apply pool configuration dsn " + dsn)
-	}
-
-	c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := pool.Ping(c); err != nil {
-		logger.Error(err)
+	if maxIdleTime != "" {
+		if v, err := time.ParseDuration(maxIdleTime); err == nil {
+			db.SetConnMaxIdleTime(v)
+		}
 	}
 
 	logger.Log("Database connected on " + dsn)
 
-	return pool
+	return db
 }

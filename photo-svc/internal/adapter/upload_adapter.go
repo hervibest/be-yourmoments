@@ -14,7 +14,7 @@ import (
 )
 
 type UploadAdapter interface {
-	UploadFile(ctx context.Context, file *multipart.FileHeader, path string) (*model.MinioFileResponse, error)
+	UploadFile(ctx context.Context, file *multipart.FileHeader, uploadFile multipart.File, path string) (*model.MinioFileResponse, error)
 	DeleteFile(ctx context.Context, fileName string) (bool, error)
 }
 
@@ -22,20 +22,13 @@ type uploadAdapter struct {
 	minio *config.Minio
 }
 
-func NewUploadAdpater(minio *config.Minio) UploadAdapter {
+func NewUploadAdapter(minio *config.Minio) UploadAdapter {
 	return &uploadAdapter{
 		minio: minio,
 	}
 }
 
-func (a *uploadAdapter) UploadFile(ctx context.Context, file *multipart.FileHeader, path string) (*model.MinioFileResponse, error) {
-	uploadFile, err := file.Open()
-	if err != nil {
-		a.minio.Logs.Error("parse file error" + err.Error())
-		return nil, fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
-	}
-	defer uploadFile.Close()
-
+func (a *uploadAdapter) UploadFile(ctx context.Context, file *multipart.FileHeader, uploadFile multipart.File, path string) (*model.MinioFileResponse, error) {
 	fileKey := path + string(RandomNumber(31)) + "_" + file.Filename
 	contentType := file.Header.Get("Content-Type")
 
@@ -64,7 +57,8 @@ func (a *uploadAdapter) UploadFile(ctx context.Context, file *multipart.FileHead
 	}
 
 	fileResponse.URL = fileURL.String()
-	fileResponse.Filename = fileKey
+	fileResponse.Filename = file.Filename
+	fileResponse.FileKey = fileKey
 	fileResponse.Mimetype = contentType
 	fileResponse.Size = file.Size
 

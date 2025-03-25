@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS user_similar_photos (
     updated_at TIMESTAMPTZ not null,
     FOREIGN KEY(photo_id) REFERENCES photos(id)
 );
-
+    
 -- +goose StatementEnd
 -- +goose Down
 -- +goose StatementBegin

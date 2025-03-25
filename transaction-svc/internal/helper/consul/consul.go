@@ -27,7 +27,6 @@ func NewRegistry(address, serviceName string) (*Registry, error) {
 
 func (r *Registry) RegisterService(ctx context.Context, serviceName, serviceID, serviceAddress string, servicePort int, tags []string) error {
 	checkID := "service:" + serviceID
-	fmt.Println("ini adalah register")
 
 	registration := &consul.AgentServiceRegistration{
 		ID:      serviceID,
@@ -73,8 +72,7 @@ func (r *Registry) GetService(ctx context.Context, serviceName string) ([]*consu
 
 func (r *Registry) HealthCheck(serviceID, serviceName string) error {
 
-	checkID := "service:" + serviceID
-	fmt.Println(checkID)
+	checkID := "services:" + serviceID
 
 	return r.client.Agent().UpdateTTL(checkID, "online", consul.HealthPassing)
 }

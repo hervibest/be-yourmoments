@@ -6,6 +6,9 @@ import (
 	grpcHandler "be-yourmoments/photo-svc/internal/delivery/grpc"
 	"be-yourmoments/photo-svc/internal/delivery/http"
 	discovery "be-yourmoments/photo-svc/internal/helper"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"be-yourmoments/photo-svc/internal/helper/consul"
 	"be-yourmoments/photo-svc/internal/helper/logger"
@@ -28,14 +31,17 @@ import (
 var logs = logger.New("main")
 
 func webServer() error {
-	app := fiber.New()
+	app := fiber.New(
+		fiber.Config{BodyLimit: 100 * 1024 * 1024},
+	)
 
 	serverConfig := config.NewServerConfig()
 	dbConfig := config.NewPostgresDatabase()
+	minioConfig := config.NewMinio()
 
 	registry, err := consul.NewRegistry(serverConfig.ConsulAddr, serverConfig.Name)
 	if err != nil {
-		logs.Error("Failed to create consul registry for category service")
+		logs.Error("Failed to create consul registry for category service" + err.Error())
 		return err
 	}
 
@@ -53,9 +59,9 @@ func webServer() error {
 		return err
 	}
 
-	err = registry.RegisterService(ctx, serverConfig.Name+"-grpc", HTTPserviceID, serverConfig.HTTPAddr, httpPortInt, []string{"http"})
+	err = registry.RegisterService(ctx, serverConfig.Name+"-http", HTTPserviceID, serverConfig.HTTPAddr, httpPortInt, []string{"http"})
 	if err != nil {
-		logs.Error("Failed to register category service to consul")
+		logs.Error("Failed to register category service to consuls")
 		return err
 	}
 
@@ -103,13 +109,19 @@ func webServer() error {
 	if err != nil {
 		logs.Error(err)
 	}
-	minioAdpter := adapter.NewMinio()
+
+	logs.Log(fmt.Sprintf("Succsess connected http service at port: %v", serverConfig.HTTP))
+
+	uploadAdapter := adapter.NewUploadAdapter(minioConfig)
+
 	photoRepo := repository.NewPhotoRepository()
-	photoUsecase := usecase.NewPhotoUsecase(dbConfig, photoRepo, aiAdapter, minioAdpter)
+	photoDetailRepo := repository.NewPhotoDetailRepository()
+	userSimilarRepo := repository.NewUserSimilarRepository()
+
+	photoUsecase := usecase.NewPhotoUsecase(dbConfig, photoRepo, photoDetailRepo, userSimilarRepo, aiAdapter, uploadAdapter)
 	photoController := http.NewPhotoController(photoUsecase)
 
 	go func() {
-		// gRPC server + reflection
 		grpcServer := grpc.NewServer()
 		reflection.Register(grpcServer)
 
@@ -127,8 +139,12 @@ func webServer() error {
 		}
 	}()
 
-	app.Use(cors.New())
+	app.Use(cors.New(
+		cors.ConfigDefault,
+	))
+
 	photoController.Route(app)
+	logs.Log(fmt.Sprintf("Succsess connected http service at port: %v", serverConfig.HTTP))
 
 	err = app.Listen(serverConfig.HTTP)
 
@@ -137,4 +153,17 @@ func webServer() error {
 		return err
 	}
 	return nil
+}
+
+func main() {
+	if err := webServer(); err != nil {
+		logs.Error(err)
+	}
+
+	logs.Log("Api gateway server started")
+	sigchan := make(chan os.Signal, 1)
+	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+
+	sig := <-sigchan
+	logs.Log(fmt.Sprintf("Received signal: %s. Shutting down gracefully...", sig))
 }

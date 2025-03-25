@@ -8,7 +8,7 @@ import (
 	discovery "be-yourmoments/photo-svc/internal/helper"
 
 	"be-yourmoments/photo-svc/internal/helper/consul"
-	"be-yourmoments/photo-svc/internal/helper/logger"
+	"be-yourmoments/photo-svc/internal/helper/logq ger"
 	"be-yourmoments/photo-svc/internal/repository"
 	"be-yourmoments/photo-svc/internal/usecase"
 	"net"

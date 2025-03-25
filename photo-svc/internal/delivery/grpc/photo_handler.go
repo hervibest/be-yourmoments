@@ -4,6 +4,8 @@ import (
 	"be-yourmoments/photo-svc/internal/pb"
 	"be-yourmoments/photo-svc/internal/usecase"
 	"context"
+	"log"
+	"net/http"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -21,6 +23,21 @@ func NewPhotoGRPCHandler(server *grpc.Server, usecase usecase.PhotoUsecase) {
 	}
 
 	pb.RegisterPhotoServiceServer(server, handler)
+}
+
+func (h *PhotoGRPCHandler) CreatePhoto(ctx context.Context, pbReq *pb.CreatePhotoRequest) (
+	*pb.CreatePhotoResponse, error) {
+	log.Println("----  CreatePhoto Requets via GRPC in photo-svc ------")
+	if err := h.usecase.CreatePhoto(context.Background(), pbReq); err != nil {
+		return &pb.CreatePhotoResponse{
+			Status: http.StatusBadRequest,
+			Error:  err.Error(),
+		}, nil
+	}
+
+	return &pb.CreatePhotoResponse{
+		Status: http.StatusCreated,
+	}, nil
 }
 
 func (h *PhotoGRPCHandler) UpdatePhotographerPhoto(ctx context.Context,

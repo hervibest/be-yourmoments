@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS photos (
     id UUID primary key not null,
     user_id UUID UNIQUE,
-    OwnedByUserId UUID UNIQUE,
+    owned_by_user_id UUID UNIQUE,
     size INT,
     url TEXT,
     preview_url TEXT,
