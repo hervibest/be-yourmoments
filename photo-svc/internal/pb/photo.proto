@@ -75,3 +75,34 @@ message UpdateFaceRecogPhotoResponse {
   int64 status = 1;
   string error = 2;
 }
+
+enum SimilarityLevelEnum {
+  SIMILARITY_UNKNOWN = 0;
+  SIMILARITY_LOW = 1;
+  SIMILARITY_MEDIUM = 2;
+  SIMILARITY_HIGH = 3;
+}
+
+message UserSimilarPhoto {
+  string id = 1;                     // ID unik (jika diperlukan dari client)
+  string photo_id = 2;               // ID foto
+  string user_id = 3;                // ID user
+  SimilarityLevelEnum similarity = 4;// Level kemiripan
+  bool is_wishlist = 5;              // Flag wishlist
+  bool is_resend = 6;                // Flag resend
+  bool is_cart = 7;                  // Flag cart
+  bool is_favorite = 8;              // Flag favorite
+  google.protobuf.Timestamp created_at = 9; // Waktu pembuatan
+  google.protobuf.Timestamp updated_at = 10;// Waktu pembaruan
+}
+
+message CreateUserSimilarPhotoRequest {
+  string is_this_you_url = 1;
+  string your_moments_url = 2;
+  repeated UserSimilarPhoto user_similar_photo = 3;
+}
+
+message CreateUserSimilarPhotoResponse {
+  int64 status = 1;
+  string error = 2;
+}

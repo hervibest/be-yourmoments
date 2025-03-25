@@ -119,6 +119,8 @@ func webServer() error {
 	userSimilarRepo := repository.NewUserSimilarRepository()
 
 	photoUsecase := usecase.NewPhotoUsecase(dbConfig, photoRepo, photoDetailRepo, userSimilarRepo, aiAdapter, uploadAdapter)
+	userSimilarPhotoUsecase := usecase.NewUserSimilarUsecase(dbConfig, photoRepo, photoDetailRepo, userSimilarRepo)
+
 	photoController := http.NewPhotoController(photoUsecase)
 
 	go func() {
@@ -132,7 +134,7 @@ func webServer() error {
 		logs.Log(fmt.Sprintf("gRPC server started on %s", serverConfig.GRPC))
 		defer l.Close()
 
-		grpcHandler.NewPhotoGRPCHandler(grpcServer, photoUsecase)
+		grpcHandler.NewPhotoGRPCHandler(grpcServer, photoUsecase, userSimilarPhotoUsecase)
 
 		if err := grpcServer.Serve(l); err != nil {
 			logs.Error(fmt.Sprintf("Failed to start gRPC category server: %v", err))
