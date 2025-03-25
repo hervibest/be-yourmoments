@@ -1,6 +1,6 @@
-# 🧩 Microservice Backend Architecture
+# 📸 Backend Microservice Application Supporting AI Face Recognition (Like Fotoyu)
 
-This repository contains a **modular microservice backend architecture** designed to scale and support high concurrency. The system is built with a strong emphasis on **domain separation**, **IO vs CPU-intensive task isolation**, and **high availability**.
+This repository contains a **microservice-based backend** architecture built to support AI-driven features such as **face recognition** and **image embedding**, similar to the functionality of the **Fotoyu** application. The backend is designed to be scalable, efficient, and ready for AI integration.
 
 ## 📦 Microservices Overview
 
