@@ -66,5 +66,3 @@ This project is actively being developed and intended for future expansion with:
 
 ---
 
-## 📂 Folder Structure (Optional Example)
-
