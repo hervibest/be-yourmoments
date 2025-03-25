@@ -92,6 +92,11 @@ func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHead
 		return err
 	}
 
+	/* TO DO
+	1. Pastikan I/O untuk open file dilakukan secara efisien disini
+	2. Pastikan persitensy hasil kompres dilakukan dengan baik
+
+	*/
 	go func() {
 		defer uploadFile.Close()
 		_, filePath, err := u.compressAdapter.CompressImage(uploadFile, "photo")
