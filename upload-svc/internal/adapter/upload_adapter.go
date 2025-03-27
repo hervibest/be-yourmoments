@@ -58,6 +58,7 @@ func (a *uploadAdapter) UploadFile(ctx context.Context, file *multipart.FileHead
 
 	fileResponse.URL = fileURL.String()
 	fileResponse.Filename = file.Filename
+	fmt.Println("ini adalah debug file name : " + file.Filename)
 	fileResponse.FileKey = fileKey
 	fileResponse.Mimetype = contentType
 	fileResponse.Size = file.Size

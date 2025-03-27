@@ -14,6 +14,7 @@ import (
 
 type PhotoUsecase interface {
 	CreatePhoto(ctx context.Context, request *pb.CreatePhotoRequest) error
+	UpdatePhotoDetail(ctx context.Context, request *pb.UpdatePhotoDetailRequest) error
 	// UpdateProcessedPhoto(ctx context.Context, req *model.RequestUpdateProcessedPhoto) (error, error)
 }
 
@@ -41,7 +42,6 @@ func NewPhotoUsecase(db *sqlx.DB, photoRepo repository.PhotoRepository,
 }
 
 func (u *photoUsecase) CreatePhoto(ctx context.Context, request *pb.CreatePhotoRequest) error {
-
 	tx, err := u.db.Beginx()
 	if err != nil {
 		return err
@@ -71,25 +71,61 @@ func (u *photoUsecase) CreatePhoto(ctx context.Context, request *pb.CreatePhotoR
 		return err
 	}
 
-	// imgConfig, _, err := image.DecodeConfig(uploadFile)
-	// if err != nil {
-	// 	log.Print("image decode error:", err)
-	// 	return fiber.NewError(fiber.StatusBadRequest, "Not a valid image")
-	// }
-
-	// WHAT TO DO JPG TYPE AND CHECKSUM
 	newPhotoDetail := &entity.PhotoDetail{
 		Id:              ulid.Make().String(),
 		PhotoId:         newPhoto.Id,
+		FileName:        request.GetPhoto().GetDetail().GetFileName(),
+		FileKey:         request.GetPhoto().GetDetail().GetFileKey(),
 		Size:            request.GetPhoto().GetDetail().GetSize(),
 		Type:            request.GetPhoto().GetDetail().GetType(),
-		Checksum:        "",
-		Width:           int8(request.GetPhoto().GetDetail().GetWidth()),
-		Height:          int8(request.GetPhoto().GetDetail().GetHeight()),
+		Checksum:        request.GetPhoto().GetDetail().GetChecksum(),
+		Width:           request.GetPhoto().GetDetail().GetWidth(),
+		Height:          request.GetPhoto().GetDetail().GetHeight(),
 		Url:             request.GetPhoto().GetDetail().GetUrl(),
 		YourMomentsType: enum.YourMomentsType(request.GetPhoto().GetDetail().GetYourMomentsType()),
 		CreatedAt:       request.GetPhoto().GetDetail().GetCreatedAt().AsTime(),
 		UpdatedAt:       request.GetPhoto().GetDetail().GetUpdatedAt().AsTime(),
+	}
+
+	newPhotoDetail, err = u.photoDetailRepo.Create(tx, newPhotoDetail)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (u *photoUsecase) UpdatePhotoDetail(ctx context.Context, request *pb.UpdatePhotoDetailRequest) error {
+	tx, err := u.db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	newPhotoDetail := &entity.PhotoDetail{
+		Id:              ulid.Make().String(),
+		PhotoId:         request.GetPhotoDetail().GetPhotoId(),
+		FileName:        request.GetPhotoDetail().GetFileName(),
+		FileKey:         request.GetPhotoDetail().GetFileKey(),
+		Size:            request.GetPhotoDetail().GetSize(),
+		Type:            "JPG",
+		Checksum:        "1212",
+		Height:          121,
+		Width:           1212,
+		Url:             request.GetPhotoDetail().GetUrl(),
+		YourMomentsType: enum.YourMomentsType(request.GetPhotoDetail().GetYourMomentsType()),
+		CreatedAt:       request.GetPhotoDetail().GetCreatedAt().AsTime(),
+		UpdatedAt:       request.GetPhotoDetail().GetUpdatedAt().AsTime(),
 	}
 
 	newPhotoDetail, err = u.photoDetailRepo.Create(tx, newPhotoDetail)

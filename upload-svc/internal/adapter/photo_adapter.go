@@ -12,6 +12,7 @@ import (
 
 type PhotoAdapter interface {
 	CreatePhoto(ctx context.Context, photo *entity.Photo, photoDetail *entity.PhotoDetail) error
+	UpdatePhotoDetail(ctx context.Context, photoDetail *entity.PhotoDetail) error
 }
 
 type photoAdapter struct {
@@ -35,6 +36,8 @@ func (a *photoAdapter) CreatePhoto(ctx context.Context, photo *entity.Photo, pho
 	photoDetailpb := &pb.PhotoDetail{
 		Id:              photoDetail.Id,
 		PhotoId:         photoDetail.PhotoId,
+		FileName:        photoDetail.FileName,
+		FileKey:         photoDetail.FileKey,
 		Size:            photoDetail.Size,
 		Type:            photoDetail.Type,
 		Checksum:        photoDetail.Checksum,
@@ -81,6 +84,41 @@ func (a *photoAdapter) CreatePhoto(ctx context.Context, photo *entity.Photo, pho
 	}
 
 	res, err := a.client.CreatePhoto(context.Background(), pbRequest)
+	if res.Status >= 400 || res.Error != "" || err != nil {
+		return errors.New(res.Error)
+	}
+
+	return nil
+}
+
+func (a *photoAdapter) UpdatePhotoDetail(ctx context.Context, photoDetail *entity.PhotoDetail) error {
+
+	photoDetailpb := &pb.PhotoDetail{
+		Id:              photoDetail.Id,
+		PhotoId:         photoDetail.PhotoId,
+		FileName:        photoDetail.FileName,
+		FileKey:         photoDetail.FileKey,
+		Size:            photoDetail.Size,
+		Type:            photoDetail.Type,
+		Checksum:        photoDetail.Checksum,
+		Width:           int32(photoDetail.Width),
+		Height:          int32(photoDetail.Height),
+		Url:             photoDetail.Url,
+		YourMomentsType: string(photoDetail.YourMomentsType),
+		CreatedAt: &timestamppb.Timestamp{
+			Seconds: photoDetail.CreatedAt.Unix(),
+			Nanos:   int32(photoDetail.CreatedAt.Nanosecond()),
+		},
+		UpdatedAt: &timestamppb.Timestamp{
+			Seconds: photoDetail.UpdatedAt.Unix(),
+			Nanos:   int32(photoDetail.UpdatedAt.Nanosecond()),
+		},
+	}
+	pbRequest := &pb.UpdatePhotoDetailRequest{
+		PhotoDetail: photoDetailpb,
+	}
+
+	res, err := a.client.UpdatePhotoDetail(context.Background(), pbRequest)
 	if res.Status >= 400 || res.Error != "" || err != nil {
 		return errors.New(res.Error)
 	}

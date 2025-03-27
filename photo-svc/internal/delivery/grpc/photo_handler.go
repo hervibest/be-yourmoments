@@ -40,6 +40,21 @@ func (h *PhotoGRPCHandler) CreatePhoto(ctx context.Context, pbReq *pb.CreatePhot
 	}, nil
 }
 
+func (h *PhotoGRPCHandler) UpdatePhotoDetail(ctx context.Context, pbReq *pb.UpdatePhotoDetailRequest) (
+	*pb.UpdatePhotoDetailResponse, error) {
+	log.Println("----  UpdatePhoto Requets via GRPC in photo-svc ------")
+	if err := h.usecase.UpdatePhotoDetail(context.Background(), pbReq); err != nil {
+		return &pb.UpdatePhotoDetailResponse{
+			Status: http.StatusBadRequest,
+			Error:  err.Error(),
+		}, nil
+	}
+
+	return &pb.UpdatePhotoDetailResponse{
+		Status: http.StatusCreated,
+	}, nil
+}
+
 func (h *PhotoGRPCHandler) UpdatePhotographerPhoto(ctx context.Context,
 	pbReq *pb.UpdatePhotographerPhotoRequest) (
 	*pb.UpdatePhotographerPhotoResponse, error) {

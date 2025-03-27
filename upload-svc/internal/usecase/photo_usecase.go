@@ -4,13 +4,21 @@ import (
 	"be-yourmoments/upload-svc/internal/adapter"
 	"be-yourmoments/upload-svc/internal/entity"
 	"be-yourmoments/upload-svc/internal/enum"
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"image"
+	"io"
 	"log"
 	"mime/multipart"
 	"net/textproto"
 	"os"
+	"strings"
 	"time"
+
+	_ "image/jpeg"
+	_ "image/png"
 
 	"github.com/gofiber/fiber"
 	"github.com/oklog/ulid/v2"
@@ -39,14 +47,31 @@ func NewPhotoUsecase(aiAdapter adapter.AiAdapter, photoAdapter adapter.PhotoAdap
 	}
 }
 
+type nopReadSeekCloser struct {
+	*bytes.Reader
+}
+
+func (n nopReadSeekCloser) Close() error {
+	return nil
+}
+
 func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHeader) error {
 	uploadFile, err := file.Open()
 	if err != nil {
-		log.Print("parse file error" + err.Error())
+		log.Print("parse file error: " + err.Error())
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
+	data, err := io.ReadAll(uploadFile)
+	if err != nil {
+		log.Print("failed to read file: ", err)
+		return fiber.NewError(fiber.StatusInternalServerError, "internal error")
+	}
+	uploadFile.Close()
 
-	upload, err := u.uploadAdapter.UploadFile(ctx, file, uploadFile, "photo")
+	readerForUpload := bytes.NewReader(data)
+	wrappedReader := nopReadSeekCloser{readerForUpload}
+
+	upload, err := u.uploadAdapter.UploadFile(ctx, file, wrappedReader, "photo")
 	if err != nil {
 		return err
 	}
@@ -58,29 +83,40 @@ func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHead
 		CollectionUrl: upload.URL,
 		Price:         133,
 		PriceStr:      "12312",
-
-		OriginalAt: time.Now(),
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
+		OriginalAt:    time.Now(),
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
-	// imgConfig, _, err := image.DecodeConfig(uploadFile)
-	// if err != nil {
-	// 	log.Print("image decode error:", err)
-	// 	return fiber.NewError(fiber.StatusBadRequest, "Not a valid image")
-	// }
+	readerForDecode := bytes.NewReader(data)
+	imgConfig, format, err := image.DecodeConfig(readerForDecode)
+	if err != nil {
+		log.Print("image decode error:", err)
+		return fiber.NewError(fiber.StatusBadRequest, "Not a valid images")
+	}
 
-	// WHAT TO DO JPG TYPE AND CHECKSUM
+	log.Println("Decoded image format:", format)
+	log.Println("Decoded image format:", imgConfig.Width, imgConfig.Height)
+
+	var imageType string
+	if format == "jpeg" {
+		imageType = "JPG"
+	} else {
+		imageType = strings.ToUpper(format)
+	}
+
+	checksum := fmt.Sprintf("%x", sha256.Sum256(data))
+
 	newPhotoDetail := &entity.PhotoDetail{
-		Id:       ulid.Make().String(),
-		PhotoId:  newPhoto.Id,
-		Size:     upload.Size,
-		Type:     "JPG",
-		Checksum: "",
-		// Width:           int8(imgConfig.Width),
-		// Height:          int8(imgConfig.Height),
-		Width:           33,
-		Height:          33,
+		Id:              ulid.Make().String(),
+		PhotoId:         newPhoto.Id,
+		FileName:        upload.Filename,
+		FileKey:         upload.FileKey,
+		Size:            upload.Size,
+		Type:            imageType,
+		Checksum:        checksum,
+		Width:           imgConfig.Width,  // disesuaikan tipe data jika perlu
+		Height:          imgConfig.Height, // disesuaikan tipe data jika perlu
 		Url:             upload.URL,
 		YourMomentsType: enum.YourMomentTypeCollection,
 		CreatedAt:       time.Now(),
@@ -93,21 +129,20 @@ func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHead
 	}
 
 	go func() {
-		defer uploadFile.Close()
-		_, filePath, err := u.compressAdapter.CompressImage(uploadFile, "photo")
+		_, filePath, err := u.compressAdapter.CompressImage(wrappedReader, "photo")
 		if err != nil {
 			log.Printf("Error compressing images: %v", err)
 			return
 		}
 
-		file, err := os.Open(filePath)
+		fileComp, err := os.Open(filePath)
 		if err != nil {
 			log.Printf("Error opening file: %v", err)
 			return
 		}
-		defer file.Close()
+		defer fileComp.Close()
 
-		fileInfo, err := file.Stat()
+		fileInfo, err := fileComp.Stat()
 		if err != nil {
 			log.Printf("Error stating file: %v", err)
 			return
@@ -123,14 +158,28 @@ func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHead
 		}
 
 		uploadPath := "photo"
-
-		response, err := u.uploadAdapter.UploadFile(ctx, fileHeader, file, uploadPath)
+		compressedPhoto, err := u.uploadAdapter.UploadFile(ctx, fileHeader, fileComp, uploadPath)
 		if err != nil {
 			log.Printf("Error uploading file: %v", err)
 			return
 		}
 
-		log.Printf("File berhasil diupload: %+v", response)
+		compressedPhotoDetail := &entity.PhotoDetail{
+			Id:              ulid.Make().String(),
+			PhotoId:         newPhoto.Id,
+			FileName:        compressedPhoto.Filename,
+			FileKey:         compressedPhoto.FileKey,
+			Size:            compressedPhoto.Size,
+			Url:             compressedPhoto.URL,
+			YourMomentsType: enum.YourMomentTypeCompressed,
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
+		}
+
+		if err := u.photoAdapter.UpdatePhotoDetail(ctx, compressedPhotoDetail); err != nil {
+			log.Printf("Error creating photo: %v", err)
+			return
+		}
 
 		if err := os.Remove(filePath); err != nil {
 			log.Printf("Gagal menghapus file: %v", err)
@@ -138,11 +187,10 @@ func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHead
 			log.Printf("File sementara berhasil dihapus: %s", filePath)
 		}
 
-		u.aiAdapter.ProcessPhoto(ctx, newPhoto.Id, response.URL)
+		// u.aiAdapter.ProcessPhoto(ctx, newPhoto.Id, response.URL)
 	}()
 
 	return nil
-
 }
 
 // func (u *photoUsecase) UpdateProcessedPhoto(ctx context.Context, req *model.RequestUpdateProcessedPhoto) (error, error) {
