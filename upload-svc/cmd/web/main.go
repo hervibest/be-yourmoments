@@ -115,10 +115,10 @@ func webServer() error {
 
 	logs.Log(fmt.Sprintf("Success connected http service at port: %v", serverConfig.HTTP))
 
-	uploadAdapter := adapter.NewUploadAdapter(minioConfig)
+	storageAdapter := adapter.NewStorageAdapter(minioConfig)
 	compressAdapter := adapter.NewCompressAdapter()
 
-	photoUsecase := usecase.NewPhotoUsecase(aiAdapter, photoAdapter, uploadAdapter, compressAdapter)
+	photoUsecase := usecase.NewPhotoUsecase(aiAdapter, photoAdapter, storageAdapter, compressAdapter)
 	photoController := http.NewPhotoController(photoUsecase)
 
 	go func() {

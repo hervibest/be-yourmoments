@@ -32,17 +32,17 @@ type PhotoUsecase interface {
 type photoUsecase struct {
 	aiAdapter       adapter.AiAdapter
 	photoAdapter    adapter.PhotoAdapter
-	uploadAdapter   adapter.UploadAdapter
+	storageAdapter  adapter.StorageAdapter
 	compressAdapter adapter.CompressAdapter
 }
 
 func NewPhotoUsecase(aiAdapter adapter.AiAdapter, photoAdapter adapter.PhotoAdapter,
-	uploadAdapter adapter.UploadAdapter,
+	storageAdapter adapter.StorageAdapter,
 	compressAdapter adapter.CompressAdapter) PhotoUsecase {
 	return &photoUsecase{
 		aiAdapter:       aiAdapter,
 		photoAdapter:    photoAdapter,
-		uploadAdapter:   uploadAdapter,
+		storageAdapter:  storageAdapter,
 		compressAdapter: compressAdapter,
 	}
 }
@@ -71,7 +71,7 @@ func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHead
 	readerForUpload := bytes.NewReader(data)
 	wrappedReader := nopReadSeekCloser{readerForUpload}
 
-	upload, err := u.uploadAdapter.UploadFile(ctx, file, wrappedReader, "photo")
+	upload, err := u.storageAdapter.UploadFile(ctx, file, wrappedReader, "photo")
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHead
 		}
 
 		uploadPath := "photo"
-		compressedPhoto, err := u.uploadAdapter.UploadFile(ctx, fileHeader, fileComp, uploadPath)
+		compressedPhoto, err := u.storageAdapter.UploadFile(ctx, fileHeader, fileComp, uploadPath)
 		if err != nil {
 			log.Printf("Error uploading file: %v", err)
 			return
