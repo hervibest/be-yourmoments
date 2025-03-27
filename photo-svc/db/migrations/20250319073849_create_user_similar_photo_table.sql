@@ -1,8 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TYPE similarity_level AS ENUM (
-    '1','2','3','4','5','6','7','8'
-);
+CREATE TYPE similarity_level AS ENUM ('1', '2', '3', '4', '5', '6', '7', '8');
 
 CREATE TABLE IF NOT EXISTS user_similar_photos (
     id CHAR(26) PRIMARY KEY NOT NULL,
@@ -12,7 +10,7 @@ CREATE TABLE IF NOT EXISTS user_similar_photos (
     is_wishlist boolean DEFAULT false,
     is_resend boolean DEFAULT false,
     is_cart boolean DEFAULT false,
-    is_favorite boolean DEFAULT false,  
+    is_favorite boolean DEFAULT false,
     created_at TIMESTAMPTZ not null,
     updated_at TIMESTAMPTZ not null,
     FOREIGN KEY(photo_id) REFERENCES photos(id)
@@ -22,5 +20,7 @@ CREATE TABLE IF NOT EXISTS user_similar_photos (
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS user_similar_photos;
-DROP TYPE IF EXISTS similarity_level;
+
+DROP TYPE similarity_level;
+
 -- +goose StatementEnd
