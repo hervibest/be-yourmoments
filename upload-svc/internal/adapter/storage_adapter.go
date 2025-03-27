@@ -13,22 +13,22 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
-type UploadAdapter interface {
+type StorageAdapter interface {
 	UploadFile(ctx context.Context, file *multipart.FileHeader, uploadFile multipart.File, path string) (*model.MinioFileResponse, error)
 	DeleteFile(ctx context.Context, fileName string) (bool, error)
 }
 
-type uploadAdapter struct {
+type storageAdapter struct {
 	minio *config.Minio
 }
 
-func NewUploadAdapter(minio *config.Minio) UploadAdapter {
-	return &uploadAdapter{
+func NewStorageAdapter(minio *config.Minio) StorageAdapter {
+	return &storageAdapter{
 		minio: minio,
 	}
 }
 
-func (a *uploadAdapter) UploadFile(ctx context.Context, file *multipart.FileHeader, uploadFile multipart.File, path string) (*model.MinioFileResponse, error) {
+func (a *storageAdapter) UploadFile(ctx context.Context, file *multipart.FileHeader, uploadFile multipart.File, path string) (*model.MinioFileResponse, error) {
 	fileKey := path + string(RandomNumber(31)) + "_" + file.Filename
 	contentType := file.Header.Get("Content-Type")
 
@@ -58,6 +58,7 @@ func (a *uploadAdapter) UploadFile(ctx context.Context, file *multipart.FileHead
 
 	fileResponse.URL = fileURL.String()
 	fileResponse.Filename = file.Filename
+	fmt.Println("ini adalah debug file name : " + file.Filename)
 	fileResponse.FileKey = fileKey
 	fileResponse.Mimetype = contentType
 	fileResponse.Size = file.Size
@@ -65,7 +66,7 @@ func (a *uploadAdapter) UploadFile(ctx context.Context, file *multipart.FileHead
 	return fileResponse, nil
 }
 
-func (a *uploadAdapter) DeleteFile(ctx context.Context, fileName string) (bool, error) {
+func (a *storageAdapter) DeleteFile(ctx context.Context, fileName string) (bool, error) {
 
 	err := a.minio.MinioClient.RemoveObject(ctx, a.minio.GetBucketName(), fileName, minio.RemoveObjectOptions{ForceDelete: true})
 	if err != nil {

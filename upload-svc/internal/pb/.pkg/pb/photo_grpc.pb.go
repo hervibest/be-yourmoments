@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	PhotoService_UpdatePhotographerPhoto_FullMethodName = "/photo.PhotoService/UpdatePhotographerPhoto"
 	PhotoService_UpdateFaceRecogPhoto_FullMethodName    = "/photo.PhotoService/UpdateFaceRecogPhoto"
+	PhotoService_CreatePhoto_FullMethodName             = "/photo.PhotoService/CreatePhoto"
 )
 
 // PhotoServiceClient is the client API for PhotoService service.
@@ -29,6 +30,7 @@ const (
 type PhotoServiceClient interface {
 	UpdatePhotographerPhoto(ctx context.Context, in *UpdatePhotographerPhotoRequest, opts ...grpc.CallOption) (*UpdatePhotographerPhotoResponse, error)
 	UpdateFaceRecogPhoto(ctx context.Context, in *UpdateFaceRecogPhotoRequest, opts ...grpc.CallOption) (*UpdateFaceRecogPhotoResponse, error)
+	CreatePhoto(ctx context.Context, in *CreatePhotoRequest, opts ...grpc.CallOption) (*CreatePhotoResponse, error)
 }
 
 type photoServiceClient struct {
@@ -59,12 +61,23 @@ func (c *photoServiceClient) UpdateFaceRecogPhoto(ctx context.Context, in *Updat
 	return out, nil
 }
 
+func (c *photoServiceClient) CreatePhoto(ctx context.Context, in *CreatePhotoRequest, opts ...grpc.CallOption) (*CreatePhotoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreatePhotoResponse)
+	err := c.cc.Invoke(ctx, PhotoService_CreatePhoto_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PhotoServiceServer is the server API for PhotoService service.
 // All implementations must embed UnimplementedPhotoServiceServer
 // for forward compatibility.
 type PhotoServiceServer interface {
 	UpdatePhotographerPhoto(context.Context, *UpdatePhotographerPhotoRequest) (*UpdatePhotographerPhotoResponse, error)
 	UpdateFaceRecogPhoto(context.Context, *UpdateFaceRecogPhotoRequest) (*UpdateFaceRecogPhotoResponse, error)
+	CreatePhoto(context.Context, *CreatePhotoRequest) (*CreatePhotoResponse, error)
 	mustEmbedUnimplementedPhotoServiceServer()
 }
 
@@ -80,6 +93,9 @@ func (UnimplementedPhotoServiceServer) UpdatePhotographerPhoto(context.Context, 
 }
 func (UnimplementedPhotoServiceServer) UpdateFaceRecogPhoto(context.Context, *UpdateFaceRecogPhotoRequest) (*UpdateFaceRecogPhotoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateFaceRecogPhoto not implemented")
+}
+func (UnimplementedPhotoServiceServer) CreatePhoto(context.Context, *CreatePhotoRequest) (*CreatePhotoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreatePhoto not implemented")
 }
 func (UnimplementedPhotoServiceServer) mustEmbedUnimplementedPhotoServiceServer() {}
 func (UnimplementedPhotoServiceServer) testEmbeddedByValue()                      {}
@@ -138,6 +154,24 @@ func _PhotoService_UpdateFaceRecogPhoto_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PhotoService_CreatePhoto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePhotoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PhotoServiceServer).CreatePhoto(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PhotoService_CreatePhoto_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PhotoServiceServer).CreatePhoto(ctx, req.(*CreatePhotoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PhotoService_ServiceDesc is the grpc.ServiceDesc for PhotoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +186,10 @@ var PhotoService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateFaceRecogPhoto",
 			Handler:    _PhotoService_UpdateFaceRecogPhoto_Handler,
+		},
+		{
+			MethodName: "CreatePhoto",
+			Handler:    _PhotoService_CreatePhoto_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

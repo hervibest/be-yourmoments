@@ -10,6 +10,8 @@ service PhotoService{
   rpc UpdatePhotographerPhoto(UpdatePhotographerPhotoRequest) returns (UpdatePhotographerPhotoResponse);
   rpc UpdateFaceRecogPhoto (UpdateFaceRecogPhotoRequest) returns (UpdateFaceRecogPhotoResponse);  
   rpc CreatePhoto(CreatePhotoRequest) returns (CreatePhotoResponse);
+  rpc UpdatePhotoDetail(UpdatePhotoDetailRequest) returns (UpdatePhotoDetailResponse);
+
 }
 
 message Photo {
@@ -35,16 +37,18 @@ message Photo {
 message PhotoDetail {
   string id = 1;
   string photo_id = 2;
-  int64 size = 3;
-  string type = 4;
-  string checksum = 5;
-  int32 width = 6;   // int8 di Go, gunakan int32 di proto karena tidak ada int8
-  int32 height = 7;
-  string url = 8;
-  string your_moments_type = 9; // Enum nanti bisa kita define kalau perlu
+  string file_name = 3;
+  string file_key = 4;
+  int64 size = 5;
+  string type = 6;
+  string checksum = 7;
+  int32 width = 8;   // int8 di Go, gunakan int32 di proto karena tidak ada int8
+  int32 height = 9;
+  string url = 10;
+  string your_moments_type = 11; // Enum nanti bisa kita define kalau perlu
 
-  google.protobuf.Timestamp created_at = 10;
-  google.protobuf.Timestamp updated_at = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
 }
 
 message CreatePhotoRequest {
@@ -52,6 +56,15 @@ message CreatePhotoRequest {
 }
 
 message CreatePhotoResponse {
+  int64 status = 1;
+  string error = 2;
+}
+
+message UpdatePhotoDetailRequest {
+  PhotoDetail photoDetail = 1;
+}
+
+message UpdatePhotoDetailResponse {
   int64 status = 1;
   string error = 2;
 }

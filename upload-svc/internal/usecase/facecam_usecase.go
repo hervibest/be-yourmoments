@@ -13,15 +13,15 @@ type FacecamUseCase interface {
 
 type facecamUseCase struct {
 	aiAdapter       adapter.AiAdapter
-	uploadAdapter   adapter.UploadAdapter
+	storageAdapter  adapter.StorageAdapter
 	compressAdapter adapter.CompressAdapter
 }
 
-func NewFacecamUseCase(aiAdapter adapter.AiAdapter, uploadAdapter adapter.UploadAdapter,
+func NewFacecamUseCase(aiAdapter adapter.AiAdapter, storageAdapter adapter.StorageAdapter,
 	compressAdapter adapter.CompressAdapter) FacecamUseCase {
 	return &facecamUseCase{
 		aiAdapter:       aiAdapter,
-		uploadAdapter:   uploadAdapter,
+		storageAdapter:  storageAdapter,
 		compressAdapter: compressAdapter,
 	}
 }
@@ -33,7 +33,7 @@ func (u *facecamUseCase) UploadFacecam(ctx context.Context, file *multipart.File
 	// 	return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	// }
 
-	// upload, err := u.uploadAdapter.UploadFile(ctx, file, uploadFile, "facecam")
+	// upload, err := u.storageAdapter.UploadFile(ctx, file, uploadFile, "facecam")
 	// if err != nil {
 	// 	return err
 	// }
@@ -102,7 +102,7 @@ func (u *facecamUseCase) UploadFacecam(ctx context.Context, file *multipart.File
 
 	// 	uploadPath := "photo"
 
-	// 	response, err := u.uploadAdapter.UploadFile(ctx, fileHeader, file, uploadPath)
+	// 	response, err := u.storageAdapter.UploadFile(ctx, fileHeader, file, uploadPath)
 	// 	if err != nil {
 	// 		log.Printf("Error uploading file: %v", err)
 	// 		return
