@@ -8,14 +8,12 @@ import (
 	"mime/multipart"
 	"os"
 	"strconv"
-	"strings"
 
-	"github.com/google/uuid"
 	"github.com/h2non/bimg"
 )
 
 type CompressAdapter interface {
-	CompressImage(uploadFile multipart.File, dirname string) (string, string, error)
+	CompressImage(originalFile *multipart.FileHeader, uploadFile multipart.File, dirname string) (string, string, error)
 }
 
 type compressAdapter struct {
@@ -30,7 +28,7 @@ func NewCompressAdapter() CompressAdapter {
 	}
 }
 
-func (a *compressAdapter) CompressImage(uploadFile multipart.File, dirname string) (string, string, error) {
+func (a *compressAdapter) CompressImage(originalFile *multipart.FileHeader, uploadFile multipart.File, dirname string) (string, string, error) {
 	log.Println("open in compress image")
 
 	buffer, err := io.ReadAll(uploadFile)
@@ -39,7 +37,7 @@ func (a *compressAdapter) CompressImage(uploadFile multipart.File, dirname strin
 		return "", "", err
 	}
 
-	filename := strings.Replace(uuid.New().String(), "-", "", -1) + ".jpg"
+	filename := fmt.Sprint("Compressed_" + originalFile.Filename)
 
 	options := bimg.Options{
 		Quality: a.compressQuality,

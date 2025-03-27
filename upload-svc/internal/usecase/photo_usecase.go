@@ -129,7 +129,7 @@ func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHead
 	}
 
 	go func() {
-		_, filePath, err := u.compressAdapter.CompressImage(wrappedReader, "photo")
+		_, filePath, err := u.compressAdapter.CompressImage(file, wrappedReader, "photo")
 		if err != nil {
 			log.Printf("Error compressing images: %v", err)
 			return
@@ -157,7 +157,7 @@ func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHead
 			Size:     fileInfo.Size(),
 		}
 
-		uploadPath := "photo"
+		uploadPath := "photo/compressed"
 		compressedPhoto, err := u.storageAdapter.UploadFile(ctx, fileHeader, fileComp, uploadPath)
 		if err != nil {
 			log.Printf("Error uploading file: %v", err)
