@@ -16,11 +16,12 @@ type aiAdapter struct {
 }
 
 func NewAiAdapter(ctx context.Context, registry discovery.Registry) (AiAdapter, error) {
-	conn, err := discovery.ServiceConnection(ctx, "ai-svc-grpc", registry)
+	conn, err := discovery.ServiceConnection(ctx, "grpc-ai-service", registry)
 	if err != nil {
 		return nil, err
 	}
 
+	log.Print("successfuly connected to grpc-ai-service")
 	client := pb.NewAiServiceClient(conn)
 
 	return &aiAdapter{

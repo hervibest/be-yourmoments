@@ -192,7 +192,7 @@ func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHead
 			log.Printf("File sementara berhasil dihapus: %s", filePath)
 		}
 
-		// u.aiAdapter.ProcessPhoto(ctx, newPhoto.Id, response.URL)
+		u.aiAdapter.ProcessPhoto(ctx, newPhoto.Id, compressedPhoto.URL)
 	}()
 
 	return nil
