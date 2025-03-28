@@ -156,38 +156,6 @@ func (u *photoUsecase) UpdatePhotoDetail(ctx context.Context, request *pb.Update
 
 }
 
-// func (u *photoUsecase) UpdateProcessedPhoto(ctx context.Context, req *model.RequestUpdateProcessedPhoto) (error, error) {
-
-// 	tx, err := u.db.Begin()
-// 	if err != nil {
-// 		return err, err
-// 	}
-
-// 	updatePhoto := &entity.Photo{
-// 		Id:                     req.Id,
-// 		PreviewUrl:             req.PreviewUrl,
-// 		PreviewWithBoundingUrl: req.PreviewWithBoundingUrl,
-// 		UpdatedAt:              time.Now(),
-// 	}
-
-// 	err = u.photoRepo.UpdateProcessedUrl(ctx, tx, updatePhoto)
-// 	if err != nil {
-// 		return err, err
-// 	}
-
-// 	err = u.userSimilarRepo.UpdateUsersForPhoto(ctx, tx, req.Id, req.UserId)
-// 	if err != nil {
-// 		return err, err
-// 	}
-
-// 	if err := tx.Commit(ctx); err != nil {
-// 		return err, err
-// 	}
-
-// 	return nil, nil
-
-// }
-
 // func (u *photoUsecase) ClaimPhoto(ctx context.Context, req *model.RequestClaimPhoto) (error, error) {
 
 // 	tx, err := u.db.Begin(ctx)

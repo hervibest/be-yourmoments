@@ -61,6 +61,7 @@ func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHead
 		log.Print("parse file error: " + err.Error())
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
+
 	data, err := io.ReadAll(uploadFile)
 	if err != nil {
 		log.Print("failed to read file: ", err)
