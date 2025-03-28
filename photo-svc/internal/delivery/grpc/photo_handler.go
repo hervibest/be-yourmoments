@@ -43,10 +43,11 @@ func (h *PhotoGRPCHandler) CreatePhoto(ctx context.Context, pbReq *pb.CreatePhot
 	}, nil
 }
 
-func (h *PhotoGRPCHandler) CreateUserSimilarPhoto(ctx context.Context, pbReq *pb.CreateUserSimilarPhotoRequest) (
+func (h *PhotoGRPCHandler) CreateUserSimilar(ctx context.Context, pbReq *pb.CreateUserSimilarPhotoRequest) (
 	*pb.CreateUserSimilarPhotoResponse, error) {
-	log.Println("----  CreatePhoto Requets via GRPC in photo-svc ------")
-	if err := h.userSimilarPhotoUseCase.CreateUserSimilarPhoto(context.Background(), pbReq); err != nil {
+	log.Println("----  CreatePhoto user similar Requets via GRPC in photo-svc ------")
+	if err := h.userSimilarPhotoUseCase.CreateUserSimilar(context.Background(), pbReq); err != nil {
+		log.Println("error hapening in create user similar ", err.Error())
 		return &pb.CreateUserSimilarPhotoResponse{
 			Status: http.StatusBadRequest,
 			Error:  err.Error(),

@@ -11,6 +11,7 @@ service PhotoService{
   rpc UpdateFaceRecogPhoto (UpdateFaceRecogPhotoRequest) returns (UpdateFaceRecogPhotoResponse);  
   rpc CreatePhoto(CreatePhotoRequest) returns (CreatePhotoResponse);
   rpc UpdatePhotoDetail(UpdatePhotoDetailRequest) returns (UpdatePhotoDetailResponse);
+  rpc CreateUserSimilar(CreateUserSimilarPhotoRequest) returns (CreateUserSimilarPhotoResponse);
 
 }
 
@@ -110,9 +111,8 @@ message UserSimilarPhoto {
 }
 
 message CreateUserSimilarPhotoRequest {
-  string is_this_you_url = 1;
-  string your_moments_url = 2;
-  repeated UserSimilarPhoto user_similar_photo = 3;
+  PhotoDetail photoDetail = 1;
+  repeated UserSimilarPhoto user_similar_photo = 2;
 }
 
 message CreateUserSimilarPhotoResponse {
