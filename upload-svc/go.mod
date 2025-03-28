@@ -7,7 +7,6 @@ toolchain go1.23.7
 require (
 	github.com/gofiber/fiber v1.14.6
 	github.com/gofiber/fiber/v2 v2.52.6
-	github.com/google/uuid v1.6.0
 	github.com/h2non/bimg v1.1.9
 	github.com/hashicorp/consul/api v1.31.2
 	github.com/hashicorp/vault/api v1.16.0
@@ -31,6 +30,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gofiber/utils v0.0.10 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/schema v1.1.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect

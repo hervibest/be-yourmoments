@@ -5,6 +5,12 @@ PROTO_FILE=photo.proto
 
 .PHONY: migrate-down proto
 
+start-photo-svc:
+	cd photo-svc/cmd/web && go run main.go
+
+start-upload-svc:
+	cd upload-svc/cmd/web && go run main.go
+
 migrate-down:
 	cd photo-svc && goose -dir $(MIGRATIONS_DIR) postgres "$(DB_URL)" down
 

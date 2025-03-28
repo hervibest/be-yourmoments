@@ -6,7 +6,6 @@ require (
 	github.com/emicklei/go-restful/v3 v3.12.2
 	github.com/gofiber/fiber v1.14.6
 	github.com/gofiber/fiber/v2 v2.52.6
-	github.com/golang/protobuf v1.5.4
 	github.com/hashicorp/consul/api v1.31.2
 	github.com/hashicorp/vault/api v1.16.0
 	github.com/jackc/pgx/v5 v5.7.3
