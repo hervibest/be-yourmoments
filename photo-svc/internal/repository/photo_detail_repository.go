@@ -18,6 +18,7 @@ func NewPhotoDetailRepository() PhotoDetailRepository {
 }
 
 func (r *photoDetailRepository) Create(tx Querier, photoDetail *entity.PhotoDetail) (*entity.PhotoDetail, error) {
+	log.Println("Created accessed")
 	query := `INSERT INTO photo_details 
 			  (id, photo_id, file_name, file_key, size, type, checksum, width, height, url, your_moments_type, created_at, updated_at) 
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`

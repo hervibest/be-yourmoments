@@ -25,6 +25,7 @@ func NewUserSimilarRepository() UserSimilarRepository {
 func (r *userSimilarRepository) InsertOrUpdate(tx Querier, photoId string, userSimilarPhotos *[]*entity.UserSimilarPhoto) error {
 	now := time.Now()
 	if len(*userSimilarPhotos) == 0 {
+		log.Println("ALL DELETED BECAUSE OF ZERO")
 		if _, err := tx.Exec("DELETE FROM user_similar_photos WHERE photo_id = $1", photoId); err != nil {
 			return err
 		}

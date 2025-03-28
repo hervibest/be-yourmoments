@@ -7,6 +7,8 @@ import (
 	"be-yourmoments/photo-svc/internal/pb"
 	"be-yourmoments/photo-svc/internal/repository"
 	"context"
+	"log"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/oklog/ulid/v2"
@@ -111,6 +113,19 @@ func (u *photoUsecase) UpdatePhotoDetail(ctx context.Context, request *pb.Update
 			tx.Rollback()
 		}
 	}()
+
+	photo := &entity.Photo{
+		Id:            request.GetPhotoDetail().PhotoId,
+		CompressedUrl: request.GetPhotoDetail().Url,
+		UpdatedAt:     time.Now(),
+	}
+
+	err = u.photoRepo.UpdateCompressedUrl(tx, photo)
+	if err != nil {
+		log.Println(err)
+
+		return err
+	}
 
 	newPhotoDetail := &entity.PhotoDetail{
 		Id:              ulid.Make().String(),

@@ -9,6 +9,7 @@ import (
 type PhotoRepository interface {
 	Create(tx Querier, photo *entity.Photo) (*entity.Photo, error)
 	UpdateProcessedUrl(tx Querier, photo *entity.Photo) error
+	UpdateCompressedUrl(tx Querier, photo *entity.Photo) error
 	// UpdateClaimedPhoto(ctx context.Context, db Querier, photo *entity.Photo) error
 	// UpdatePhotoStatus(ctx context.Context, db Querier, photo *entity.Photo) error
 }
@@ -36,12 +37,26 @@ func (r *photoRepository) Create(tx Querier, photo *entity.Photo) (*entity.Photo
 	return photo, nil
 }
 
+func (r *photoRepository) UpdateCompressedUrl(tx Querier, photo *entity.Photo) error {
+	log.Println("Updated accesed")
+	query := `UPDATE photos 
+			  SET compressed_url = $1, updated_at = $2
+			  WHERE id = $3`
+
+	_, err := tx.Exec(query, photo.CompressedUrl, photo.UpdatedAt, photo.Id)
+	if err != nil {
+		return fmt.Errorf("failed to update photo: %w", err)
+	}
+	return nil
+}
+
 func (r *photoRepository) UpdateProcessedUrl(tx Querier, photo *entity.Photo) error {
+	log.Println("Updated accesed")
 	query := `UPDATE photos 
 			  SET is_this_you_url = $1, your_moments_url = $2, updated_at = $3 
 			  WHERE id = $4`
 
-	_, err := tx.Exec(query, photo.IsThisYouURL, photo.YourMomentsUrl, photo.UpdatedAt)
+	_, err := tx.Exec(query, photo.IsThisYouURL, photo.YourMomentsUrl, photo.UpdatedAt, photo.Id)
 	if err != nil {
 		return fmt.Errorf("failed to update photo: %w", err)
 	}
