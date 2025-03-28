@@ -25,7 +25,7 @@ import (
 )
 
 type PhotoUsecase interface {
-	UploadPhoto(ctx context.Context, file *multipart.FileHeader) error
+	UploadPhoto(ctx context.Context, file *multipart.FileHeader, priceStr string, price int) error
 	// UpdateProcessedPhoto(ctx context.Context, req *model.RequestUpdateProcessedPhoto) (error, error)
 }
 
@@ -55,7 +55,7 @@ func (n nopReadSeekCloser) Close() error {
 	return nil
 }
 
-func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHeader) error {
+func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHeader, priceStr string, price int) error {
 	uploadFile, err := file.Open()
 	if err != nil {
 		log.Print("parse file error: " + err.Error())
@@ -82,8 +82,8 @@ func (u *photoUsecase) UploadPhoto(ctx context.Context, file *multipart.FileHead
 		CreatorId:     "test-create-photo-case-2",
 		Title:         upload.Filename,
 		CollectionUrl: upload.URL,
-		Price:         133,
-		PriceStr:      "12312",
+		Price:         price,
+		PriceStr:      priceStr,
 		OriginalAt:    time.Now(),
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),

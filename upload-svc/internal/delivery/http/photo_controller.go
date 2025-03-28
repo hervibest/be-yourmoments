@@ -3,6 +3,7 @@ package http
 import (
 	"be-yourmoments/upload-svc/internal/usecase"
 	"net/http"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -28,7 +29,10 @@ func (c *photoController) UploadPhoto(ctx *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, "invalid photo")
 	}
 
-	err = c.photoUsecase.UploadPhoto(ctx.UserContext(), file)
+	price := ctx.FormValue("price", "0")
+	priceStr, _ := strconv.Atoi(price)
+
+	err = c.photoUsecase.UploadPhoto(ctx.UserContext(), file, price, priceStr)
 	if err != nil {
 		return err
 	}
