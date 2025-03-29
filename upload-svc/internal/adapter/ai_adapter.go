@@ -9,6 +9,7 @@ import (
 
 type AiAdapter interface {
 	ProcessPhoto(ctx context.Context, fileId, fileUrl string) error
+	ProcessFacecam(ctx context.Context, userId, fileUrl string) error
 }
 
 type aiAdapter struct {
@@ -29,13 +30,29 @@ func NewAiAdapter(ctx context.Context, registry discovery.Registry) (AiAdapter, 
 	}, nil
 }
 
-func (a *aiAdapter) ProcessPhoto(ctx context.Context, fileId, fileUrl string) error {
+func (a *aiAdapter) ProcessPhoto(ctx context.Context, userId, fileUrl string) error {
 	processPhotoRequest := &pb.ProcessPhotoRequest{
-		Id:  fileId,
+		Id:  userId,
 		Url: fileUrl,
 	}
 
 	res, err := a.client.ProcessPhoto(ctx, processPhotoRequest)
+	if err != nil {
+		return err
+	}
+
+	log.Println(res)
+	return nil
+}
+
+func (a *aiAdapter) ProcessFacecam(ctx context.Context, fileId, fileUrl string) error {
+	log.Println("REQUESTED PROCESS FACECAM VIA GRPC TO AI SERVER")
+	processPhotoRequest := &pb.ProcessFacecamRequest{
+		Id:  fileId,
+		Url: fileUrl,
+	}
+
+	res, err := a.client.ProcessFacecam(ctx, processPhotoRequest)
 	if err != nil {
 		return err
 	}

@@ -10,7 +10,9 @@ service PhotoService{
   rpc UpdatePhotographerPhoto(UpdatePhotographerPhotoRequest) returns (UpdatePhotographerPhotoResponse);
   rpc UpdateFaceRecogPhoto (UpdateFaceRecogPhotoRequest) returns (UpdateFaceRecogPhotoResponse);  
   rpc CreatePhoto(CreatePhotoRequest) returns (CreatePhotoResponse);
+  rpc CreateFacecam(CreateFacecamRequest) returns (CreateFacecamResponse);
   rpc UpdatePhotoDetail(UpdatePhotoDetailRequest) returns (UpdatePhotoDetailResponse);
+  rpc CreateUserSimilar(CreateUserSimilarPhotoRequest) returns (CreateUserSimilarPhotoResponse);
 
 }
 
@@ -85,6 +87,61 @@ message UpdateFaceRecogPhotoRequest {
 }
 
 message UpdateFaceRecogPhotoResponse {
+  int64 status = 1;
+  string error = 2;
+}
+
+enum SimilarityLevelEnum {
+  SIMILARITY_UNKNOWN = 0;
+  SIMILARITY_LOW = 1;
+  SIMILARITY_MEDIUM = 2;
+  SIMILARITY_HIGH = 3;
+}
+
+message UserSimilarPhoto {
+  string id = 1;                     // ID unik (jika diperlukan dari client)
+  string photo_id = 2;               // ID foto
+  string user_id = 3;                // ID user
+  SimilarityLevelEnum similarity = 4;// Level kemiripan
+  bool is_wishlist = 5;              // Flag wishlist
+  bool is_resend = 6;                // Flag resend
+  bool is_cart = 7;                  // Flag cart
+  bool is_favorite = 8;              // Flag favorite
+  google.protobuf.Timestamp created_at = 9; // Waktu pembuatan
+  google.protobuf.Timestamp updated_at = 10;// Waktu pembaruan
+}
+
+message CreateUserSimilarPhotoRequest {
+  PhotoDetail photoDetail = 1;
+  repeated UserSimilarPhoto user_similar_photo = 2;
+}
+
+message CreateUserSimilarPhotoResponse {
+  int64 status = 1;
+  string error = 2;
+}
+
+
+message Facecam {
+  string id = 1;
+  string creator_id = 2;
+  string file_name = 3;
+  string file_key = 4;
+  string title = 5;
+  int64 size = 6;
+  string checksum = 7;
+  string url = 8;
+
+  google.protobuf.Timestamp original_at = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message CreateFacecamRequest {
+  Facecam facecam = 1;
+}
+
+message CreateFacecamResponse {
   int64 status = 1;
   string error = 2;
 }

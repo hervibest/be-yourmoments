@@ -2,117 +2,127 @@ package usecase
 
 import (
 	"be-yourmoments/upload-svc/internal/adapter"
+	"be-yourmoments/upload-svc/internal/entity"
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"fmt"
+	"io"
+	"log"
 	"mime/multipart"
+	"net/textproto"
+	"os"
+	"time"
+
+	"github.com/gofiber/fiber"
+	"github.com/oklog/ulid/v2"
 )
 
 type FacecamUseCase interface {
-	UploadFacecam(ctx context.Context, file *multipart.FileHeader) error
+	UploadFacecam(ctx context.Context, file *multipart.FileHeader, userId string) error
 	// UpdateProcessedPhoto(ctx context.Context, req *model.RequestUpdateProcessedPhoto) (error, error)
 }
 
 type facecamUseCase struct {
 	aiAdapter       adapter.AiAdapter
+	photoAdapter    adapter.PhotoAdapter
 	storageAdapter  adapter.StorageAdapter
 	compressAdapter adapter.CompressAdapter
 }
 
-func NewFacecamUseCase(aiAdapter adapter.AiAdapter, storageAdapter adapter.StorageAdapter,
-	compressAdapter adapter.CompressAdapter) FacecamUseCase {
+func NewFacecamUseCase(aiAdapter adapter.AiAdapter, photoAdapter adapter.PhotoAdapter,
+	storageAdapter adapter.StorageAdapter, compressAdapter adapter.CompressAdapter) FacecamUseCase {
 	return &facecamUseCase{
 		aiAdapter:       aiAdapter,
+		photoAdapter:    photoAdapter,
 		storageAdapter:  storageAdapter,
 		compressAdapter: compressAdapter,
 	}
 }
 
-func (u *facecamUseCase) UploadFacecam(ctx context.Context, file *multipart.FileHeader) error {
-	// uploadFile, err := file.Open()
-	// if err != nil {
-	// 	log.Print("parse file error" + err.Error())
-	// 	return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
-	// }
+func (u *facecamUseCase) UploadFacecam(ctx context.Context, file *multipart.FileHeader, userId string) error {
+	uploadFile, err := file.Open()
+	if err != nil {
+		log.Print("parse file error: " + err.Error())
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
 
-	// upload, err := u.storageAdapter.UploadFile(ctx, file, uploadFile, "facecam")
-	// if err != nil {
-	// 	return err
-	// }
+	data, err := io.ReadAll(uploadFile)
+	if err != nil {
+		log.Print("failed to read file: ", err)
+		return fiber.NewError(fiber.StatusInternalServerError, "internal error")
+	}
+	uploadFile.Close()
 
-	// tx, err := u.db.Beginx()
-	// if err != nil {
-	// 	return err
-	// }
+	readerForUpload := bytes.NewReader(data)
+	wrappedReader := nopReadSeekCloser{readerForUpload}
 
-	// defer func() {
-	// 	if err != nil {
-	// 		tx.Rollback()
-	// 	}
-	// }()
+	checksum := fmt.Sprintf("%x", sha256.Sum256(data))
 
-	// newPhoto := &entity.Facecam{
-	// 	Id:        ulid.Make().String(),
-	// 	CreatorId: "test-create-facecam-case",
-	// 	Title:     upload.Filename,
-	// 	Size:      upload.Size,
-	// 	Url:       upload.URL,
+	go func() {
+		_, filePath, err := u.compressAdapter.CompressImage(file, wrappedReader, "facecam")
+		if err != nil {
+			log.Printf("Error compressing images: %v", err)
+			return
+		}
 
-	// 	OriginalAt: time.Now(),
-	// 	CreatedAt:  time.Now(),
-	// 	UpdatedAt:  time.Now(),
-	// }
+		fileComp, err := os.Open(filePath)
+		if err != nil {
+			log.Printf("Error opening file: %v", err)
+			return
+		}
+		defer fileComp.Close()
 
-	// newPhoto, err = u.facecamRepo.Create(tx, newPhoto)
-	// if err != nil {
-	// 	return err
-	// }
+		fileInfo, err := fileComp.Stat()
+		if err != nil {
+			log.Printf("Error stating file: %v", err)
+			return
+		}
 
-	// if err := tx.Commit(); err != nil {
-	// 	return err
-	// }
+		mimeHeader := make(textproto.MIMEHeader)
+		mimeHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename="%s"`, fileInfo.Name()))
 
-	// go func() {
-	// 	defer uploadFile.Close()
-	// 	_, filePath, err := u.compressAdapter.CompressImage(uploadFile, "facecam")
-	// 	if err != nil {
-	// 		log.Printf("Error compressing image: %v", err)
-	// 		return
-	// 	}
+		fileHeader := &multipart.FileHeader{
+			Filename: fileInfo.Name(),
+			Header:   mimeHeader,
+			Size:     fileInfo.Size(),
+		}
 
-	// 	file, err := os.Open(filePath)
-	// 	if err != nil {
-	// 		log.Printf("Error opening file: %v", err)
-	// 		return
-	// 	}
-	// 	defer file.Close()
+		uploadPath := "facecam/compressed"
+		compressedPhoto, err := u.storageAdapter.UploadFile(ctx, fileHeader, fileComp, uploadPath)
+		if err != nil {
+			log.Printf("Error uploading file: %v", err)
+			return
+		}
 
-	// 	fileInfo, err := file.Stat()
-	// 	if err != nil {
-	// 		log.Printf("Error stating file: %v", err)
-	// 		return
-	// 	}
+		newFacecam := &entity.Facecam{
+			Id:         ulid.Make().String(),
+			UserId:     userId,
+			FileName:   compressedPhoto.Filename,
+			FileKey:    compressedPhoto.FileKey,
+			Title:      compressedPhoto.Filename,
+			Size:       compressedPhoto.Size,
+			Checksum:   checksum,
+			Url:        compressedPhoto.URL,
+			OriginalAt: time.Now(),
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+		}
 
-	// 	mimeHeader := make(textproto.MIMEHeader)
-	// 	mimeHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename="%s"`, fileInfo.Name()))
+		if err := u.photoAdapter.CreateFacecam(ctx, newFacecam); err != nil {
+			log.Printf("Error creating facecam: %v", err)
+			return
+		}
 
-	// 	fileHeader := &multipart.FileHeader{
-	// 		Filename: fileInfo.Name(),
-	// 		Header:   mimeHeader,
-	// 		Size:     fileInfo.Size(),
-	// 	}
+		if err := os.Remove(filePath); err != nil {
+			log.Printf("Gagal menghapus file: %v", err)
+		} else {
+			log.Printf("File sementara berhasil dihapus: %s", filePath)
+		}
 
-	// 	uploadPath := "photo"
+		u.aiAdapter.ProcessFacecam(ctx, userId, compressedPhoto.URL)
+	}()
 
-	// 	response, err := u.storageAdapter.UploadFile(ctx, fileHeader, file, uploadPath)
-	// 	if err != nil {
-	// 		log.Printf("Error uploading file: %v", err)
-	// 		return
-	// 	}
-
-	// 	log.Printf("File berhasil diupload: %+v", response)
-	// 	u.aiAdapter.ProcessPhoto(ctx, newPhoto.Id, response.URL)
-	// }()
-
-	// return nil
 	return nil
 
 }

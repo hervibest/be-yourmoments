@@ -6,7 +6,7 @@ option go_package = ".pkg/pb";
 
 service AiService{
   rpc ProcessPhoto(ProcessPhotoRequest) returns (ProcessPhotoResponse);
-  rpc ProcessPhotoProfile(ProcessPhotoProfileRequest) returns (ProcessPhotoProfileResponse);
+  rpc ProcessFacecam(ProcessFacecamRequest) returns (ProcessFacecamResponse);
 }
 
 message ProcessPhotoRequest{
@@ -19,12 +19,12 @@ message ProcessPhotoResponse{
   string error = 2;
 }
 
-message ProcessPhotoProfileRequest{
+message ProcessFacecamRequest{
   string id = 1;
   string url = 2;
 }
 
-message ProcessPhotoProfileResponse{
+message ProcessFacecamResponse{
   int64 status = 1;
   string error = 2;
 }

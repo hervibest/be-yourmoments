@@ -19,10 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PhotoService_UpdatePhotographerPhoto_FullMethodName = "/photo.PhotoService/UpdatePhotographerPhoto"
-	PhotoService_UpdateFaceRecogPhoto_FullMethodName    = "/photo.PhotoService/UpdateFaceRecogPhoto"
-	PhotoService_CreatePhoto_FullMethodName             = "/photo.PhotoService/CreatePhoto"
-	PhotoService_UpdatePhotoDetail_FullMethodName       = "/photo.PhotoService/UpdatePhotoDetail"
+	PhotoService_UpdatePhotographerPhoto_FullMethodName  = "/photo.PhotoService/UpdatePhotographerPhoto"
+	PhotoService_UpdateFaceRecogPhoto_FullMethodName     = "/photo.PhotoService/UpdateFaceRecogPhoto"
+	PhotoService_CreatePhoto_FullMethodName              = "/photo.PhotoService/CreatePhoto"
+	PhotoService_CreateUserSimilarFacecam_FullMethodName = "/photo.PhotoService/CreateUserSimilarFacecam"
+	PhotoService_CreateFacecam_FullMethodName            = "/photo.PhotoService/CreateFacecam"
+	PhotoService_UpdatePhotoDetail_FullMethodName        = "/photo.PhotoService/UpdatePhotoDetail"
+	PhotoService_CreateUserSimilar_FullMethodName        = "/photo.PhotoService/CreateUserSimilar"
 )
 
 // PhotoServiceClient is the client API for PhotoService service.
@@ -32,7 +35,10 @@ type PhotoServiceClient interface {
 	UpdatePhotographerPhoto(ctx context.Context, in *UpdatePhotographerPhotoRequest, opts ...grpc.CallOption) (*UpdatePhotographerPhotoResponse, error)
 	UpdateFaceRecogPhoto(ctx context.Context, in *UpdateFaceRecogPhotoRequest, opts ...grpc.CallOption) (*UpdateFaceRecogPhotoResponse, error)
 	CreatePhoto(ctx context.Context, in *CreatePhotoRequest, opts ...grpc.CallOption) (*CreatePhotoResponse, error)
+	CreateUserSimilarFacecam(ctx context.Context, in *CreateUserSimilarFacecamRequest, opts ...grpc.CallOption) (*CreateUserSimilarFacecamResponse, error)
+	CreateFacecam(ctx context.Context, in *CreateFacecamRequest, opts ...grpc.CallOption) (*CreateFacecamResponse, error)
 	UpdatePhotoDetail(ctx context.Context, in *UpdatePhotoDetailRequest, opts ...grpc.CallOption) (*UpdatePhotoDetailResponse, error)
+	CreateUserSimilar(ctx context.Context, in *CreateUserSimilarPhotoRequest, opts ...grpc.CallOption) (*CreateUserSimilarPhotoResponse, error)
 }
 
 type photoServiceClient struct {
@@ -73,10 +79,40 @@ func (c *photoServiceClient) CreatePhoto(ctx context.Context, in *CreatePhotoReq
 	return out, nil
 }
 
+func (c *photoServiceClient) CreateUserSimilarFacecam(ctx context.Context, in *CreateUserSimilarFacecamRequest, opts ...grpc.CallOption) (*CreateUserSimilarFacecamResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateUserSimilarFacecamResponse)
+	err := c.cc.Invoke(ctx, PhotoService_CreateUserSimilarFacecam_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *photoServiceClient) CreateFacecam(ctx context.Context, in *CreateFacecamRequest, opts ...grpc.CallOption) (*CreateFacecamResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateFacecamResponse)
+	err := c.cc.Invoke(ctx, PhotoService_CreateFacecam_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *photoServiceClient) UpdatePhotoDetail(ctx context.Context, in *UpdatePhotoDetailRequest, opts ...grpc.CallOption) (*UpdatePhotoDetailResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdatePhotoDetailResponse)
 	err := c.cc.Invoke(ctx, PhotoService_UpdatePhotoDetail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *photoServiceClient) CreateUserSimilar(ctx context.Context, in *CreateUserSimilarPhotoRequest, opts ...grpc.CallOption) (*CreateUserSimilarPhotoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateUserSimilarPhotoResponse)
+	err := c.cc.Invoke(ctx, PhotoService_CreateUserSimilar_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +126,10 @@ type PhotoServiceServer interface {
 	UpdatePhotographerPhoto(context.Context, *UpdatePhotographerPhotoRequest) (*UpdatePhotographerPhotoResponse, error)
 	UpdateFaceRecogPhoto(context.Context, *UpdateFaceRecogPhotoRequest) (*UpdateFaceRecogPhotoResponse, error)
 	CreatePhoto(context.Context, *CreatePhotoRequest) (*CreatePhotoResponse, error)
+	CreateUserSimilarFacecam(context.Context, *CreateUserSimilarFacecamRequest) (*CreateUserSimilarFacecamResponse, error)
+	CreateFacecam(context.Context, *CreateFacecamRequest) (*CreateFacecamResponse, error)
 	UpdatePhotoDetail(context.Context, *UpdatePhotoDetailRequest) (*UpdatePhotoDetailResponse, error)
+	CreateUserSimilar(context.Context, *CreateUserSimilarPhotoRequest) (*CreateUserSimilarPhotoResponse, error)
 	mustEmbedUnimplementedPhotoServiceServer()
 }
 
@@ -110,8 +149,17 @@ func (UnimplementedPhotoServiceServer) UpdateFaceRecogPhoto(context.Context, *Up
 func (UnimplementedPhotoServiceServer) CreatePhoto(context.Context, *CreatePhotoRequest) (*CreatePhotoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreatePhoto not implemented")
 }
+func (UnimplementedPhotoServiceServer) CreateUserSimilarFacecam(context.Context, *CreateUserSimilarFacecamRequest) (*CreateUserSimilarFacecamResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateUserSimilarFacecam not implemented")
+}
+func (UnimplementedPhotoServiceServer) CreateFacecam(context.Context, *CreateFacecamRequest) (*CreateFacecamResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateFacecam not implemented")
+}
 func (UnimplementedPhotoServiceServer) UpdatePhotoDetail(context.Context, *UpdatePhotoDetailRequest) (*UpdatePhotoDetailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePhotoDetail not implemented")
+}
+func (UnimplementedPhotoServiceServer) CreateUserSimilar(context.Context, *CreateUserSimilarPhotoRequest) (*CreateUserSimilarPhotoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateUserSimilar not implemented")
 }
 func (UnimplementedPhotoServiceServer) mustEmbedUnimplementedPhotoServiceServer() {}
 func (UnimplementedPhotoServiceServer) testEmbeddedByValue()                      {}
@@ -188,6 +236,42 @@ func _PhotoService_CreatePhoto_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PhotoService_CreateUserSimilarFacecam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateUserSimilarFacecamRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PhotoServiceServer).CreateUserSimilarFacecam(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PhotoService_CreateUserSimilarFacecam_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PhotoServiceServer).CreateUserSimilarFacecam(ctx, req.(*CreateUserSimilarFacecamRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PhotoService_CreateFacecam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateFacecamRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PhotoServiceServer).CreateFacecam(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PhotoService_CreateFacecam_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PhotoServiceServer).CreateFacecam(ctx, req.(*CreateFacecamRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _PhotoService_UpdatePhotoDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdatePhotoDetailRequest)
 	if err := dec(in); err != nil {
@@ -202,6 +286,24 @@ func _PhotoService_UpdatePhotoDetail_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PhotoServiceServer).UpdatePhotoDetail(ctx, req.(*UpdatePhotoDetailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PhotoService_CreateUserSimilar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateUserSimilarPhotoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PhotoServiceServer).CreateUserSimilar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PhotoService_CreateUserSimilar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PhotoServiceServer).CreateUserSimilar(ctx, req.(*CreateUserSimilarPhotoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -226,8 +328,20 @@ var PhotoService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PhotoService_CreatePhoto_Handler,
 		},
 		{
+			MethodName: "CreateUserSimilarFacecam",
+			Handler:    _PhotoService_CreateUserSimilarFacecam_Handler,
+		},
+		{
+			MethodName: "CreateFacecam",
+			Handler:    _PhotoService_CreateFacecam_Handler,
+		},
+		{
 			MethodName: "UpdatePhotoDetail",
 			Handler:    _PhotoService_UpdatePhotoDetail_Handler,
+		},
+		{
+			MethodName: "CreateUserSimilar",
+			Handler:    _PhotoService_CreateUserSimilar_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

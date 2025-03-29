@@ -11,8 +11,9 @@ import (
 )
 
 type PhotoAdapter interface {
-	CreatePhoto(ctx context.Context, photo *entity.Photo, photoDetail *entity.PhotoDetail) error
-	UpdatePhotoDetail(ctx context.Context, photoDetail *entity.PhotoDetail) error
+	CreatePhoto(ctx context.Context, photo *entity.Photo, facecam *entity.PhotoDetail) error
+	UpdatePhotoDetail(ctx context.Context, facecam *entity.PhotoDetail) error
+	CreateFacecam(ctx context.Context, facecam *entity.Facecam) error
 }
 
 type photoAdapter struct {
@@ -31,27 +32,27 @@ func NewPhotoAdapter(ctx context.Context, registry discovery.Registry) (PhotoAda
 	}, nil
 }
 
-func (a *photoAdapter) CreatePhoto(ctx context.Context, photo *entity.Photo, photoDetail *entity.PhotoDetail) error {
+func (a *photoAdapter) CreatePhoto(ctx context.Context, photo *entity.Photo, facecam *entity.PhotoDetail) error {
 
-	photoDetailpb := &pb.PhotoDetail{
-		Id:              photoDetail.Id,
-		PhotoId:         photoDetail.PhotoId,
-		FileName:        photoDetail.FileName,
-		FileKey:         photoDetail.FileKey,
-		Size:            photoDetail.Size,
-		Type:            photoDetail.Type,
-		Checksum:        photoDetail.Checksum,
-		Width:           int32(photoDetail.Width),
-		Height:          int32(photoDetail.Height),
-		Url:             photoDetail.Url,
-		YourMomentsType: string(photoDetail.YourMomentsType),
+	facecampb := &pb.PhotoDetail{
+		Id:              facecam.Id,
+		PhotoId:         facecam.PhotoId,
+		FileName:        facecam.FileName,
+		FileKey:         facecam.FileKey,
+		Size:            facecam.Size,
+		Type:            facecam.Type,
+		Checksum:        facecam.Checksum,
+		Width:           int32(facecam.Width),
+		Height:          int32(facecam.Height),
+		Url:             facecam.Url,
+		YourMomentsType: string(facecam.YourMomentsType),
 		CreatedAt: &timestamppb.Timestamp{
-			Seconds: photoDetail.CreatedAt.Unix(),
-			Nanos:   int32(photoDetail.CreatedAt.Nanosecond()),
+			Seconds: facecam.CreatedAt.Unix(),
+			Nanos:   int32(facecam.CreatedAt.Nanosecond()),
 		},
 		UpdatedAt: &timestamppb.Timestamp{
-			Seconds: photoDetail.UpdatedAt.Unix(),
-			Nanos:   int32(photoDetail.UpdatedAt.Nanosecond()),
+			Seconds: facecam.UpdatedAt.Unix(),
+			Nanos:   int32(facecam.UpdatedAt.Nanosecond()),
 		},
 	}
 
@@ -76,7 +77,7 @@ func (a *photoAdapter) CreatePhoto(ctx context.Context, photo *entity.Photo, pho
 			Nanos:   int32(photo.UpdatedAt.Nanosecond()),
 		},
 
-		Detail: photoDetailpb,
+		Detail: facecampb,
 	}
 
 	pbRequest := &pb.CreatePhotoRequest{
@@ -91,34 +92,66 @@ func (a *photoAdapter) CreatePhoto(ctx context.Context, photo *entity.Photo, pho
 	return nil
 }
 
-func (a *photoAdapter) UpdatePhotoDetail(ctx context.Context, photoDetail *entity.PhotoDetail) error {
+func (a *photoAdapter) UpdatePhotoDetail(ctx context.Context, facecam *entity.PhotoDetail) error {
 
-	photoDetailpb := &pb.PhotoDetail{
-		Id:              photoDetail.Id,
-		PhotoId:         photoDetail.PhotoId,
-		FileName:        photoDetail.FileName,
-		FileKey:         photoDetail.FileKey,
-		Size:            photoDetail.Size,
-		Type:            photoDetail.Type,
-		Checksum:        photoDetail.Checksum,
-		Width:           int32(photoDetail.Width),
-		Height:          int32(photoDetail.Height),
-		Url:             photoDetail.Url,
-		YourMomentsType: string(photoDetail.YourMomentsType),
+	facecampb := &pb.PhotoDetail{
+		Id:              facecam.Id,
+		PhotoId:         facecam.PhotoId,
+		FileName:        facecam.FileName,
+		FileKey:         facecam.FileKey,
+		Size:            facecam.Size,
+		Type:            facecam.Type,
+		Checksum:        facecam.Checksum,
+		Width:           int32(facecam.Width),
+		Height:          int32(facecam.Height),
+		Url:             facecam.Url,
+		YourMomentsType: string(facecam.YourMomentsType),
 		CreatedAt: &timestamppb.Timestamp{
-			Seconds: photoDetail.CreatedAt.Unix(),
-			Nanos:   int32(photoDetail.CreatedAt.Nanosecond()),
+			Seconds: facecam.CreatedAt.Unix(),
+			Nanos:   int32(facecam.CreatedAt.Nanosecond()),
 		},
 		UpdatedAt: &timestamppb.Timestamp{
-			Seconds: photoDetail.UpdatedAt.Unix(),
-			Nanos:   int32(photoDetail.UpdatedAt.Nanosecond()),
+			Seconds: facecam.UpdatedAt.Unix(),
+			Nanos:   int32(facecam.UpdatedAt.Nanosecond()),
 		},
 	}
 	pbRequest := &pb.UpdatePhotoDetailRequest{
-		PhotoDetail: photoDetailpb,
+		PhotoDetail: facecampb,
 	}
 
 	res, err := a.client.UpdatePhotoDetail(context.Background(), pbRequest)
+	if res.Status >= 400 || res.Error != "" || err != nil {
+		return errors.New(res.Error)
+	}
+
+	return nil
+}
+
+func (a *photoAdapter) CreateFacecam(ctx context.Context, facecam *entity.Facecam) error {
+
+	facecamPb := &pb.Facecam{
+		Id:       facecam.Id,
+		UserId:   facecam.UserId,
+		FileName: facecam.FileName,
+		FileKey:  facecam.FileKey,
+		Size:     facecam.Size,
+		Checksum: facecam.Checksum,
+		Url:      facecam.Url,
+		CreatedAt: &timestamppb.Timestamp{
+			Seconds: facecam.CreatedAt.Unix(),
+			Nanos:   int32(facecam.CreatedAt.Nanosecond()),
+		},
+		UpdatedAt: &timestamppb.Timestamp{
+			Seconds: facecam.UpdatedAt.Unix(),
+			Nanos:   int32(facecam.UpdatedAt.Nanosecond()),
+		},
+	}
+
+	pbRequest := &pb.CreateFacecamRequest{
+		Facecam: facecamPb,
+	}
+
+	res, err := a.client.CreateFacecam(context.Background(), pbRequest)
 	if res.Status >= 400 || res.Error != "" || err != nil {
 		return errors.New(res.Error)
 	}

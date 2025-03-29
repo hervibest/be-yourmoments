@@ -6,7 +6,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (c *photoController) Route(app *fiber.App) {
+func (c *photoController) PhotoRoute(app *fiber.App) {
+	// api := app.Group(config.EndpointPrefix)
+	// // api.Post("/single", c.UploadPhoto)
+}
+
+func (c *facecamController) FacecamRoute(app *fiber.App) {
 	api := app.Group(config.EndpointPrefix)
-	api.Post("/single", c.UploadPhoto)
+	api.Post("/facecam/single", c.UploadFacecam)
 }

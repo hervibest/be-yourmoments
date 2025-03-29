@@ -15,22 +15,25 @@ import (
 
 type UserSimilarUsecase interface {
 	CreateUserSimilar(ctx context.Context, request *pb.CreateUserSimilarPhotoRequest) error
+	CreateUserFacecam(ctx context.Context, request *pb.CreateUserSimilarFacecamRequest) error
 }
 
 type userSimilarUsecase struct {
 	db              *sqlx.DB
 	photoRepo       repository.PhotoRepository
 	photoDetailRepo repository.PhotoDetailRepository
+	facecamRepo     repository.FacecamRepository
 	userSimilarRepo repository.UserSimilarRepository
 }
 
 func NewUserSimilarUsecase(db *sqlx.DB, photoRepo repository.PhotoRepository,
-	photoDetailRepo repository.PhotoDetailRepository,
+	photoDetailRepo repository.PhotoDetailRepository, facecamRepo repository.FacecamRepository,
 	userSimilarRepo repository.UserSimilarRepository) UserSimilarUsecase {
 	return &userSimilarUsecase{
 		db:              db,
 		photoRepo:       photoRepo,
 		photoDetailRepo: photoDetailRepo,
+		facecamRepo:     facecamRepo,
 		userSimilarRepo: userSimilarRepo,
 	}
 }
@@ -105,6 +108,66 @@ func (u *userSimilarUsecase) CreateUserSimilar(ctx context.Context, request *pb.
 	}
 
 	err = u.userSimilarRepo.InsertOrUpdate(tx, request.GetPhotoDetail().PhotoId, &userSimilarPhotos)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+
+}
+
+func (u *userSimilarUsecase) CreateUserFacecam(ctx context.Context, request *pb.CreateUserSimilarFacecamRequest) error {
+	log.Println("Create user similar ")
+
+	tx, err := u.db.Beginx()
+	if err != nil {
+		log.Println(err)
+
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			log.Println(err)
+
+			tx.Rollback()
+		}
+	}()
+
+	facecam := &entity.Facecam{
+		UserId:      request.GetFacecam().GetUserId(),
+		IsProcessed: request.GetFacecam().GetIsProcessed(),
+		UpdatedAt:   request.GetFacecam().GetUpdatedAt().AsTime(),
+	}
+
+	err = u.facecamRepo.UpdatedProcessedFacecam(tx, facecam)
+	if err != nil {
+		log.Println(err)
+
+		return err
+	}
+
+	userSimilarPhotos := make([]*entity.UserSimilarPhoto, 0, len(request.GetUserSimilarPhoto()))
+	for _, userSimilarPhotoRequest := range request.GetUserSimilarPhoto() {
+		log.Println("UPDATE UserSimilarPhoto from facecams")
+		userSimilarPhoto := &entity.UserSimilarPhoto{
+			Id:         ulid.Make().String(),
+			PhotoId:    userSimilarPhotoRequest.GetPhotoId(),
+			UserId:     userSimilarPhotoRequest.GetUserId(),
+			Similarity: enum.SimilarityLevelEnum(userSimilarPhotoRequest.GetSimilarity().String()),
+			CreatedAt:  userSimilarPhotoRequest.GetCreatedAt().AsTime(),
+			UpdatedAt:  userSimilarPhotoRequest.GetUpdatedAt().AsTime(),
+		}
+		userSimilarPhotos = append(userSimilarPhotos, userSimilarPhoto)
+	}
+
+	err = u.userSimilarRepo.InserOrUpdateByUserId(tx, request.GetFacecam().UserId, &userSimilarPhotos)
 	if err != nil {
 		log.Println(err)
 		return err

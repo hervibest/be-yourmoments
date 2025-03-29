@@ -10,7 +10,7 @@ import (
 
 type PhotoController interface {
 	UploadPhoto(ctx *fiber.Ctx) error
-	Route(app *fiber.App)
+	PhotoRoute(app *fiber.App)
 }
 
 type photoController struct {
@@ -29,10 +29,10 @@ func (c *photoController) UploadPhoto(ctx *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, "invalid photo")
 	}
 
-	price := ctx.FormValue("price", "0")
-	priceStr, _ := strconv.Atoi(price)
+	priceStr := ctx.FormValue("price", "0")
+	price, _ := strconv.Atoi(priceStr)
 
-	err = c.photoUsecase.UploadPhoto(ctx.UserContext(), file, price, priceStr)
+	err = c.photoUsecase.UploadPhoto(ctx.UserContext(), file, priceStr, price)
 	if err != nil {
 		return err
 	}

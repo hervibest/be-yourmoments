@@ -121,6 +121,9 @@ func webServer() error {
 	photoUsecase := usecase.NewPhotoUsecase(aiAdapter, photoAdapter, storageAdapter, compressAdapter)
 	photoController := http.NewPhotoController(photoUsecase)
 
+	facecamUsecase := usecase.NewFacecamUseCase(aiAdapter, photoAdapter, storageAdapter, compressAdapter)
+	facecamController := http.NewFacecamController(facecamUsecase)
+
 	go func() {
 		// gRPC server + reflection
 		grpcServer := grpc.NewServer()
@@ -144,7 +147,8 @@ func webServer() error {
 		cors.ConfigDefault,
 	))
 
-	photoController.Route(app)
+	photoController.PhotoRoute(app)
+	facecamController.FacecamRoute(app)
 	logs.Log(fmt.Sprintf("Succsess connected http service at port: %v", serverConfig.HTTP))
 
 	err = app.Listen(serverConfig.HTTP)

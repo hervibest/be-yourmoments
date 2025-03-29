@@ -10,6 +10,8 @@ service PhotoService{
   rpc UpdatePhotographerPhoto(UpdatePhotographerPhotoRequest) returns (UpdatePhotographerPhotoResponse);
   rpc UpdateFaceRecogPhoto (UpdateFaceRecogPhotoRequest) returns (UpdateFaceRecogPhotoResponse);  
   rpc CreatePhoto(CreatePhotoRequest) returns (CreatePhotoResponse);
+  rpc CreateUserSimilarFacecam(CreateUserSimilarFacecamRequest) returns (CreateUserSimilarFacecamResponse);
+  rpc CreateFacecam(CreateFacecamRequest) returns (CreateFacecamResponse);
   rpc UpdatePhotoDetail(UpdatePhotoDetailRequest) returns (UpdatePhotoDetailResponse);
   rpc CreateUserSimilar(CreateUserSimilarPhotoRequest) returns (CreateUserSimilarPhotoResponse);
 
@@ -116,6 +118,42 @@ message CreateUserSimilarPhotoRequest {
 }
 
 message CreateUserSimilarPhotoResponse {
+  int64 status = 1;
+  string error = 2;
+}
+
+
+message Facecam {
+  string id = 1;
+  string user_id = 2;
+  string file_name = 3;
+  string file_key = 4;
+  string title = 5;
+  int64 size = 6;
+  string checksum = 7;
+  string url = 8;
+  bool is_processed = 9;
+
+  google.protobuf.Timestamp original_at = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+}
+
+message CreateFacecamRequest {
+  Facecam facecam = 1;
+}
+
+message CreateFacecamResponse {
+  int64 status = 1;
+  string error = 2;
+}
+
+message CreateUserSimilarFacecamRequest {
+  Facecam facecam = 1;
+  repeated UserSimilarPhoto user_similar_photo = 2;
+}
+
+message CreateUserSimilarFacecamResponse {
   int64 status = 1;
   string error = 2;
 }

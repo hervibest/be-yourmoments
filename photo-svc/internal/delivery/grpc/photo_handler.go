@@ -14,14 +14,16 @@ import (
 
 type PhotoGRPCHandler struct {
 	photoUseCase            usecase.PhotoUsecase
+	facecamUseCase          usecase.FacecamUseCase
 	userSimilarPhotoUseCase usecase.UserSimilarUsecase
 	pb.UnimplementedPhotoServiceServer
 }
 
 func NewPhotoGRPCHandler(server *grpc.Server, photoUseCase usecase.PhotoUsecase,
-	userSimilarPhotoUseCase usecase.UserSimilarUsecase) {
+	facecamUseCase usecase.FacecamUseCase, userSimilarPhotoUseCase usecase.UserSimilarUsecase) {
 	handler := &PhotoGRPCHandler{
 		photoUseCase:            photoUseCase,
+		facecamUseCase:          facecamUseCase,
 		userSimilarPhotoUseCase: userSimilarPhotoUseCase,
 	}
 
@@ -70,6 +72,37 @@ func (h *PhotoGRPCHandler) UpdatePhotoDetail(ctx context.Context, pbReq *pb.Upda
 	}
 
 	return &pb.UpdatePhotoDetailResponse{
+		Status: http.StatusCreated,
+	}, nil
+}
+
+func (h *PhotoGRPCHandler) CreateFacecam(ctx context.Context, pbReq *pb.CreateFacecamRequest) (
+	*pb.CreateFacecamResponse, error) {
+	log.Println("----  Create facecam Requets via GRPC in photo-svc ------")
+	if err := h.facecamUseCase.CreateFacecam(context.Background(), pbReq); err != nil {
+		return &pb.CreateFacecamResponse{
+			Status: http.StatusBadRequest,
+			Error:  err.Error(),
+		}, nil
+	}
+
+	return &pb.CreateFacecamResponse{
+		Status: http.StatusCreated,
+	}, nil
+}
+
+func (h *PhotoGRPCHandler) CreateUserSimilarFacecam(ctx context.Context, pbReq *pb.CreateUserSimilarFacecamRequest) (
+	*pb.CreateUserSimilarFacecamResponse, error) {
+	log.Println("----  CreatePhoto user similar Requets via GRPC in photo-svc ------")
+	if err := h.userSimilarPhotoUseCase.CreateUserFacecam(context.Background(), pbReq); err != nil {
+		log.Println("error hapening in create user similar ", err.Error())
+		return &pb.CreateUserSimilarFacecamResponse{
+			Status: http.StatusBadRequest,
+			Error:  err.Error(),
+		}, nil
+	}
+
+	return &pb.CreateUserSimilarFacecamResponse{
 		Status: http.StatusCreated,
 	}, nil
 }
