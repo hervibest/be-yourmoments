@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TYPE similarity_level AS ENUM (
-    '1','2','3','4','5','6','7','8'
+    '1','2','3','4','5','6'
 );
 
 CREATE TABLE IF NOT EXISTS user_similar_photos (
@@ -22,5 +22,5 @@ CREATE TABLE IF NOT EXISTS user_similar_photos (
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS user_similar_photos;
-DROP TYPE IF EXISTS similarity_level;
+DROP TYPE similarity_level;
 -- +goose StatementEnd
