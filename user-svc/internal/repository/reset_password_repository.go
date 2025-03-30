@@ -93,7 +93,7 @@ func (r *resetPasswordRepository) FindByEmail(ctx context.Context, email string)
 	resetPassword := new(entity.ResetPassword)
 
 	row := r.resetPasswordStmt.findByEmail.QueryRowxContext(ctx, email)
-	if err := row.Scan(&resetPassword); err != nil {
+	if err := row.StructScan(resetPassword); err != nil {
 
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (r *resetPasswordRepository) FindByEmailAndToken(ctx context.Context, email
 	resetPassword := new(entity.ResetPassword)
 
 	row := r.resetPasswordStmt.findByEmailAndToken.QueryRowxContext(ctx, email, token)
-	if err := row.Scan(&resetPassword); err != nil {
+	if err := row.StructScan(resetPassword); err != nil {
 
 		return nil, err
 	}

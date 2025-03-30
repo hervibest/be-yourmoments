@@ -84,7 +84,7 @@ func (r *emailVerificationRepository) FindByEmail(ctx context.Context, email str
 	emailVerification := new(entity.EmailVerification)
 
 	row := r.emailVerifStmt.findByEmail.QueryRowxContext(ctx, email)
-	if err := row.Scan(&emailVerification); err != nil {
+	if err := row.StructScan(emailVerification); err != nil {
 
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (r *emailVerificationRepository) FindByEmailAndToken(ctx context.Context, e
 	emailVerification := new(entity.EmailVerification)
 
 	row := r.emailVerifStmt.findByEmailAndToken.QueryRowxContext(ctx, email, token)
-	if err := row.Scan(&emailVerification); err != nil {
+	if err := row.StructScan(emailVerification); err != nil {
 
 		return nil, err
 	}
