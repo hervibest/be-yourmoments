@@ -21,9 +21,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gofiber/fiber/v2/middleware/cors"
-
-	"github.com/gofiber/fiber/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -31,9 +28,7 @@ import (
 var logs = logger.New("main")
 
 func webServer() error {
-	app := fiber.New(
-		fiber.Config{BodyLimit: 100 * 1024 * 1024},
-	)
+	app := config.NewApp()
 
 	serverConfig := config.NewServerConfig()
 	dbConfig := config.NewPostgresDatabase()
@@ -142,10 +137,6 @@ func webServer() error {
 			logs.Error(fmt.Sprintf("Failed to start gRPC category server: %v", err))
 		}
 	}()
-
-	app.Use(cors.New(
-		cors.ConfigDefault,
-	))
 
 	photoController.Route(app)
 	logs.Log(fmt.Sprintf("Succsess connected http service at port: %v", serverConfig.HTTP))

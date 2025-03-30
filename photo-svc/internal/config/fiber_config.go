@@ -9,8 +9,10 @@ import (
 
 func NewApp() *fiber.App {
 	app := fiber.New(fiber.Config{
-		Prefork: false,
-		AppName: "photo-svc",
+		Prefork:      false,
+		AppName:      "photo-svc",
+		ErrorHandler: CustomError(),
+		BodyLimit:    100 * 1024 * 1024,
 	})
 
 	app.Use(cors.ConfigDefault)
