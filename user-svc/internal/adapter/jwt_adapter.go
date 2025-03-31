@@ -128,6 +128,7 @@ func (c *jwtAdapter) VerifyAccessToken(token string) (*entity.AccessToken, error
 
 		expiresAt := time.Unix(int64(expFloat), 0)
 		accessTokenDetail.ExpiresAt = expiresAt
+		accessTokenDetail.Token = token
 	}
 
 	return accessTokenDetail, nil
@@ -166,6 +167,7 @@ func (c *jwtAdapter) VerifyRefreshToken(token string) (*entity.RefreshToken, err
 
 		expiresAt := time.Unix(int64(expFloat), 0)
 		refreshTokenDetail.ExpiresAt = expiresAt
+		refreshTokenDetail.Token = token
 	}
 
 	return refreshTokenDetail, nil

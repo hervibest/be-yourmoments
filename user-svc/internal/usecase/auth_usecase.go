@@ -162,14 +162,14 @@ func (u *authUseCase) RegisterByGoogleSignIn(ctx context.Context, request *model
 
 	countByGoogleTotal, err := u.userRepository.CountByEmailGoogleId(ctx, claims.Email, claims.GoogleId)
 	if err != nil {
-		log.Println("eror count by email google id")
+		log.Println("error count by email google id")
 		return nil, nil, err
 	}
 
 	if countByGoogleTotal > 0 {
 		user, err := u.userRepository.FindByEmail(ctx, claims.Email)
-		if err != nil {
-			log.Println(err.Error())
+		if err != nil && errors.Is(sql.ErrNoRows, err) {
+			log.Println(err)
 			return nil, nil, fiber.NewError(fiber.StatusBadRequest, "invalid email")
 		}
 
@@ -329,7 +329,7 @@ func (u *authUseCase) RegisterByEmail(ctx context.Context, request *model.Regist
 		return nil, err
 	}
 
-	if err := u.requestEmailVerification(ctx, request.Email, false); err != nil {
+	if err := u.requestEmailVerification(ctx, request.Email, true); err != nil {
 		log.Println(err)
 		return nil, err
 	}
@@ -390,7 +390,7 @@ func (u *authUseCase) requestEmailVerification(ctx context.Context, email string
 
 func (u *authUseCase) ResendEmailVerification(ctx context.Context, email string) error {
 	user, err := u.userRepository.FindByEmail(ctx, email)
-	if err != nil {
+	if err != nil && errors.Is(sql.ErrNoRows, err) {
 		log.Println(err)
 		return fiber.NewError(fiber.StatusBadRequest, "invalid email")
 	}
@@ -404,7 +404,7 @@ func (u *authUseCase) ResendEmailVerification(ctx context.Context, email string)
 		return fiber.NewError(fiber.StatusBadRequest, "resend request is not valid")
 	}
 
-	if err := u.requestEmailVerification(ctx, email, true); err != nil {
+	if err := u.requestEmailVerification(ctx, email, false); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "resend request is not valid")
 	}
 
@@ -414,11 +414,13 @@ func (u *authUseCase) ResendEmailVerification(ctx context.Context, email string)
 func (u *authUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmailUserRequest) error {
 	decryptedToken, err := u.securityAdapter.Decrypt(request.Token)
 	if err != nil {
+		log.Printf("failed to decrypt : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, "invalid token")
 	}
 
 	emailVerification, err := u.emailVerificationRepo.FindByEmailAndToken(ctx, request.Email, decryptedToken)
 	if err != nil {
+		log.Printf("failed find email and token : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, "invalid token")
 	}
 
@@ -468,13 +470,10 @@ func (u *authUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmai
 
 func (u *authUseCase) RequestResetPassword(ctx context.Context, email string) error {
 	_, err := u.userRepository.FindByEmail(ctx, email)
-	if err != nil {
-		if errors.Is(sql.ErrNoRows, err) {
-			log.Println(err)
-			return fiber.NewError(fiber.StatusBadRequest, "invalid email")
-		}
-		log.Fatalln(err)
+	if err != nil && errors.Is(sql.ErrNoRows, err) {
+		log.Println(err)
 		return fiber.NewError(fiber.StatusBadRequest, "invalid email")
+
 	}
 
 	countByEmailTotal, err := u.resetPasswordRepo.CountByEmail(ctx, email)
@@ -495,9 +494,12 @@ func (u *authUseCase) RequestResetPassword(ctx context.Context, email string) er
 	}()
 
 	token := uuid.NewString()
+	now := time.Now()
 	resetPassword := &entity.ResetPassword{
-		Email: email,
-		Token: token,
+		Email:     email,
+		Token:     token,
+		CreatedAt: &now,
+		UpdatedAt: &now,
 	}
 
 	if countByEmailTotal > 0 {
@@ -533,20 +535,17 @@ func (u *authUseCase) RequestResetPassword(ctx context.Context, email string) er
 }
 
 func (u *authUseCase) ValidateResetPassword(ctx context.Context, request *model.ValidateResetTokenRequest) (bool, error) {
-	_, err := u.securityAdapter.Decrypt(request.Token)
+	decryptedToken, err := u.securityAdapter.Decrypt(request.Token)
 	if err != nil {
 		log.Println(err)
 		return false, fiber.NewError(fiber.StatusBadRequest, "invalid reset password token")
 	}
 
-	_, err = u.resetPasswordRepo.FindByEmailAndToken(ctx, request.Email, request.Token)
-	if err != nil {
-		if errors.Is(sql.ErrNoRows, err) {
-			log.Println(err)
+	_, err = u.resetPasswordRepo.FindByEmailAndToken(ctx, request.Email, decryptedToken)
+	if err != nil && errors.Is(sql.ErrNoRows, err) {
+		log.Println(err)
 			return false, fiber.NewError(fiber.StatusBadRequest, "invalid email")
 		}
-		log.Fatalln(err)
-		return false, fiber.NewError(fiber.StatusBadRequest, "invalid email")
 	}
 
 	return true, nil
@@ -559,7 +558,7 @@ func (u *authUseCase) ResetPassword(ctx context.Context, request *model.ResetPas
 	}
 
 	resetPassword, err := u.resetPasswordRepo.FindByEmailAndToken(ctx, request.Email, decryptedToken)
-	if err != nil {
+	if err != nil && errors.Is(sql.ErrNoRows, err) {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid token")
 	}
 
@@ -612,13 +611,9 @@ func (u *authUseCase) ResetPassword(ctx context.Context, request *model.ResetPas
 
 func (u *authUseCase) Login(ctx context.Context, request *model.LoginUserRequest) (*model.UserResponse, *model.TokenResponse, error) {
 	user, err := u.userRepository.FindByMultipleParam(ctx, request.MultipleParam)
-	if err != nil {
-		if errors.Is(sql.ErrNoRows, err) {
+	if err != nil && errors.Is(sql.ErrNoRows, err) {
 			log.Println(err)
 			return nil, nil, fiber.NewError(fiber.StatusBadRequest, "invalid email or password")
-		}
-		log.Fatalln(err)
-		return nil, nil, fiber.NewError(fiber.StatusBadRequest, "invalid email")
 	}
 
 	if !(user.HasEmail() && user.HasVerifiedEmail()) &&
@@ -667,7 +662,7 @@ func (u *authUseCase) generateToken(ctx context.Context, userId string) (*model.
 
 func (u *authUseCase) Current(ctx context.Context, email string) (*model.UserResponse, error) {
 	user, err := u.userRepository.FindByEmail(ctx, email)
-	if err != nil {
+	if err != nil && errors.Is(sql.ErrNoRows, err) {
 		return nil, fiber.ErrNotFound
 	}
 
@@ -688,7 +683,7 @@ func (u *authUseCase) Verify(ctx context.Context, request *model.VerifyUserReque
 	}
 
 	user, err := u.userRepository.FindById(ctx, accessTokenDetail.UserId)
-	if err != nil {
+	if err != nil && errors.Is(sql.ErrNoRows, err) {
 		log.Printf("failed to verify access token : %+v", err)
 		return nil, fiber.ErrUnauthorized
 	}
@@ -737,9 +732,9 @@ func (u *authUseCase) AccessTokenRequest(ctx context.Context, refreshToken strin
 	}
 
 	user, err := u.userRepository.FindById(ctx, refreshTokenDetail.UserId)
-	if err != nil {
-		log.Printf("failed to find user : %+v", err)
-		fiber.NewError(fiber.StatusUnauthorized, "User not found")
+	if err != nil && errors.Is(sql.ErrNoRows, err) {
+		log.Println(err)
+		return nil, nil, fiber.NewError(fiber.StatusUnauthorized, "invalid refresh token")
 	}
 
 	//TODO !!! ACCESS TOKEN TO RESPONSE

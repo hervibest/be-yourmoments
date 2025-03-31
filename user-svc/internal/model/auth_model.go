@@ -8,7 +8,7 @@ type RegisterByPhoneRequest struct {
 	Username    string     `json:"username" validate:"required,max=100"`
 	Password    string     `json:"password" validate:"required"`
 	PhoneNumber string     `json:"phone_number" validate:"required,min=10,max=15"`
-	BirthDate   *time.Time `json:"birth_date" validate:"required,timeformat"`
+	BirthDate   *time.Time `json:"birth_date" validate:"required"`
 	//TODO
 }
 
@@ -51,7 +51,7 @@ type ValidateResetTokenRequest struct {
 type ResetPasswordUserRequest struct {
 	Email    string `json:"email" validate:"required,email,max=100"`
 	Password string `json:"password" validate:"required,max=100"`
-	Token    string `json:"token" validate:"required"`
+	Token    string `validate:"required"`
 }
 
 type LoginUserRequest struct {

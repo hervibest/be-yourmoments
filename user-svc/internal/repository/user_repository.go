@@ -276,7 +276,7 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*entity
 func (r *userRepository) FindByMultipleParam(ctx context.Context, multipleParam string) (*entity.User, error) {
 	user := new(entity.User)
 
-	row := r.userPreparedStmt.findByEmail.QueryRowxContext(ctx, multipleParam)
+	row := r.userPreparedStmt.findByMultipleParam.QueryRowxContext(ctx, multipleParam)
 	if err := row.StructScan(user); err != nil {
 
 		return nil, err
@@ -288,7 +288,7 @@ func (r *userRepository) FindByMultipleParam(ctx context.Context, multipleParam 
 func (r *userRepository) UpdateEmailVerifiedAt(ctx context.Context, tx Querier, user *entity.User) (*entity.User, error) {
 	query := `UPDATE users set email_verified_at = $1, updated_at = $2 WHERE email = $3`
 
-	_, err := tx.ExecContext(ctx, query, user.Email.String, user.EmailVerifiedAt, user.UpdatedAt, user.Email.String)
+	_, err := tx.ExecContext(ctx, query, user.EmailVerifiedAt, user.UpdatedAt, user.Email.String)
 	if err != nil {
 		log.Println(err)
 		return nil, fmt.Errorf("failed to insert user: %w", err)
