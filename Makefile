@@ -32,3 +32,6 @@ user-svc-migrate-up:
 
 proto:
 	cd $(PROTO_DIR) && protoc --go_out=. --go-grpc_out=. $(PROTO_FILE)
+
+mockgen:
+	mockgen -source=./repository/reset_password_repository.go -destination=./mocks/repository/mock_reset_password_repository.go -package=mockrepository
