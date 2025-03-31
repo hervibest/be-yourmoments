@@ -14,4 +14,5 @@ type RouteConfig struct {
 
 func (r *RouteConfig) Setup() {
 	r.SetupAuthRoute()
+	r.SetupUserRoute()
 }

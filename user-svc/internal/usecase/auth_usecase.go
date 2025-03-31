@@ -544,8 +544,7 @@ func (u *authUseCase) ValidateResetPassword(ctx context.Context, request *model.
 	_, err = u.resetPasswordRepo.FindByEmailAndToken(ctx, request.Email, decryptedToken)
 	if err != nil && errors.Is(sql.ErrNoRows, err) {
 		log.Println(err)
-			return false, fiber.NewError(fiber.StatusBadRequest, "invalid email")
-		}
+		return false, fiber.NewError(fiber.StatusBadRequest, "invalid email")
 	}
 
 	return true, nil
@@ -612,8 +611,8 @@ func (u *authUseCase) ResetPassword(ctx context.Context, request *model.ResetPas
 func (u *authUseCase) Login(ctx context.Context, request *model.LoginUserRequest) (*model.UserResponse, *model.TokenResponse, error) {
 	user, err := u.userRepository.FindByMultipleParam(ctx, request.MultipleParam)
 	if err != nil && errors.Is(sql.ErrNoRows, err) {
-			log.Println(err)
-			return nil, nil, fiber.NewError(fiber.StatusBadRequest, "invalid email or password")
+		log.Println(err)
+		return nil, nil, fiber.NewError(fiber.StatusBadRequest, "invalid email or password")
 	}
 
 	if !(user.HasEmail() && user.HasVerifiedEmail()) &&
@@ -678,7 +677,7 @@ func (u *authUseCase) Verify(ctx context.Context, request *model.VerifyUserReque
 
 	userId, err := u.cacheAdapter.Get(ctx, request.Token)
 	if userId != "" {
-		log.Printf("access token found in Redis, user has already signed out : %+v", err)
+		log.Println("access token found in Redis, user has already signed out")
 		return nil, fiber.ErrUnauthorized
 	}
 
@@ -703,7 +702,7 @@ func (u *authUseCase) Verify(ctx context.Context, request *model.VerifyUserReque
 // TODO does ErrInternalServerError considered to be a best practice ?
 func (u *authUseCase) Logout(ctx context.Context, request *model.LogoutUserRequest) (bool, error) {
 
-	if err := u.cacheAdapter.Set(ctx, request.AccessToken, request.UserId, time.Until(request.ExpiresAt)); err != nil {
+	if err := u.cacheAdapter.Set(ctx, request.AccessToken, "revoked", time.Until(request.ExpiresAt)); err != nil {
 		log.Printf("failed to save access token to cache : %+v", err)
 		return false, fiber.ErrInternalServerError
 	}
