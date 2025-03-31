@@ -16,7 +16,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -38,7 +37,7 @@ type AuthUseCase interface {
 }
 
 type authUseCase struct {
-	db                    *sqlx.DB
+	db                    repository.BeginTx
 	userRepository        repository.UserRepository
 	userProfileRepository repository.UserProfileRepository
 	emailVerificationRepo repository.EmailVerificationRepository
@@ -50,7 +49,7 @@ type authUseCase struct {
 	cacheAdapter          adapter.CacheAdapter
 }
 
-func NewAuthUseCase(db *sqlx.DB, userRepository repository.UserRepository, userProfileRepository repository.UserProfileRepository,
+func NewAuthUseCase(db repository.BeginTx, userRepository repository.UserRepository, userProfileRepository repository.UserProfileRepository,
 	emailVerificationRepo repository.EmailVerificationRepository, resetPasswordRepo repository.ResetPasswordRepository,
 	googleTokenAdapter adapter.GoogleTokenAdapter, emailAdapter adapter.EmailAdapter, jwtAdapter adapter.JWTAdapter,
 	securityAdapter adapter.SecurityAdapter, cacheAdapter adapter.CacheAdapter) AuthUseCase {
