@@ -128,7 +128,7 @@ func (u *authUseCase) RegisterByPhoneNumber(ctx context.Context, request *model.
 		UpdatedAt: &now,
 	}
 
-	userProfile, err = u.userProfileRepository.Create(ctx, tx, userProfile)
+	_, err = u.userProfileRepository.Create(ctx, tx, userProfile)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -223,7 +223,7 @@ func (u *authUseCase) RegisterByGoogleSignIn(ctx context.Context, request *model
 			UpdatedAt:  &now,
 		}
 
-		userProfile, err = u.userProfileRepository.CreateWithProfileUrl(ctx, tx, userProfile)
+		_, err = u.userProfileRepository.CreateWithProfileUrl(ctx, tx, userProfile)
 		if err != nil {
 			log.Println(err)
 			return nil, nil, err
@@ -304,7 +304,7 @@ func (u *authUseCase) RegisterByEmail(ctx context.Context, request *model.Regist
 		UpdatedAt: &now,
 	}
 
-	userProfile, err = u.userProfileRepository.Create(ctx, tx, userProfile)
+	_, err = u.userProfileRepository.Create(ctx, tx, userProfile)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -360,12 +360,12 @@ func (u *authUseCase) requestEmailVerification(ctx context.Context, email string
 	}()
 
 	if newUser {
-		emailVerification, err = u.emailVerificationRepo.Insert(ctx, tx, emailVerification)
+		_, err = u.emailVerificationRepo.Insert(ctx, tx, emailVerification)
 		if err != nil {
 			return err
 		}
 	} else {
-		emailVerification, err = u.emailVerificationRepo.Update(ctx, tx, emailVerification)
+		_, err = u.emailVerificationRepo.Update(ctx, tx, emailVerification)
 		if err != nil {
 			return err
 		}
@@ -448,7 +448,7 @@ func (u *authUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmai
 		}
 	}()
 
-	user, err = u.userRepository.UpdateEmailVerifiedAt(ctx, tx, user)
+	_, err = u.userRepository.UpdateEmailVerifiedAt(ctx, tx, user)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -592,7 +592,7 @@ func (u *authUseCase) ResetPassword(ctx context.Context, request *model.ResetPas
 		}
 	}()
 
-	user, err = u.userRepository.UpdatePassword(ctx, tx, user)
+	_, err = u.userRepository.UpdatePassword(ctx, tx, user)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -643,18 +643,18 @@ func (u *authUseCase) Login(ctx context.Context, request *model.LoginUserRequest
 func (u *authUseCase) generateToken(ctx context.Context, userId string) (*model.TokenResponse, error) {
 	accessTokenDetail, err := u.jwtAdapter.GenerateAccessToken(userId)
 	if err != nil {
-		log.Print("failed to generate access token : %+v", err)
+		log.Printf("failed to generate access token : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
 	refreshTokenDetail, err := u.jwtAdapter.GenerateRefreshToken(userId)
 	if err != nil {
-		log.Print("failed to generate refresh token : %+v", err)
+		log.Printf("failed to generate refresh token : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
 	if err := u.cacheAdapter.Set(ctx, refreshTokenDetail.Token, userId, time.Until(refreshTokenDetail.ExpiresAt)); err != nil {
-		log.Print("failed to save refresh token to cache : %+v", err)
+		log.Printf("failed to save refresh token to cache : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
@@ -678,19 +678,19 @@ func (u *authUseCase) Current(ctx context.Context, email string) (*model.UserRes
 func (u *authUseCase) Verify(ctx context.Context, request *model.VerifyUserRequest) (*model.AuthResponse, error) {
 	accessTokenDetail, err := u.jwtAdapter.VerifyAccessToken(request.Token)
 	if err != nil {
-		log.Print("failed to verify access token : %+v", err)
+		log.Printf("failed to verify access token : %+v", err)
 		return nil, fiber.ErrUnauthorized
 	}
 
 	userId, err := u.cacheAdapter.Get(ctx, request.Token)
 	if userId != "" {
-		log.Print("access token found in Redis, user has already signed out : %+v", err)
+		log.Printf("access token found in Redis, user has already signed out : %+v", err)
 		return nil, fiber.ErrUnauthorized
 	}
 
 	user, err := u.userRepository.FindById(ctx, accessTokenDetail.UserId)
 	if err != nil {
-		log.Print("failed to verify access token : %+v", err)
+		log.Printf("failed to verify access token : %+v", err)
 		return nil, fiber.ErrUnauthorized
 	}
 
@@ -710,12 +710,12 @@ func (u *authUseCase) Verify(ctx context.Context, request *model.VerifyUserReque
 func (u *authUseCase) Logout(ctx context.Context, request *model.LogoutUserRequest) (bool, error) {
 
 	if err := u.cacheAdapter.Set(ctx, request.AccessToken, request.UserId, time.Until(request.ExpiresAt)); err != nil {
-		log.Print("failed to save access token to cache : %+v", err)
+		log.Printf("failed to save access token to cache : %+v", err)
 		return false, fiber.ErrInternalServerError
 	}
 
 	if err := u.cacheAdapter.Del(ctx, request.RefreshToken); err != nil {
-		log.Print("failed to save refresh token to cache : %+v", err)
+		log.Printf("failed to save refresh token to cache : %+v", err)
 		return false, fiber.ErrInternalServerError
 	}
 
@@ -726,27 +726,27 @@ func (u *authUseCase) AccessTokenRequest(ctx context.Context, refreshToken strin
 
 	refreshTokenDetail, err := u.jwtAdapter.VerifyRefreshToken(refreshToken)
 	if err != nil {
-		log.Print("failed to verify refresh token : %+v", err)
+		log.Printf("failed to verify refresh token : %+v", err)
 		return nil, nil, fiber.NewError(fiber.StatusUnauthorized, "Invalid refresh token")
 
 	}
 
 	userId, err := u.cacheAdapter.Get(ctx, refreshToken)
 	if userId == "" {
-		log.Print("refresh token not found in Redis : %+v", err)
+		log.Printf("refresh token not found in Redis : %+v", err)
 		return nil, nil, fiber.NewError(fiber.StatusUnauthorized, "Invalid refresh token")
 	}
 
 	user, err := u.userRepository.FindById(ctx, refreshTokenDetail.UserId)
 	if err != nil {
-		log.Print("failed to find user : %+v", err)
+		log.Printf("failed to find user : %+v", err)
 		fiber.NewError(fiber.StatusUnauthorized, "User not found")
 	}
 
 	//TODO !!! ACCESS TOKEN TO RESPONSE
 	accessTokenDetail, err := u.jwtAdapter.GenerateAccessToken(user.Id)
 	if err != nil {
-		log.Print("failed to generate access token : %+v", err)
+		log.Printf("failed to generate access token : %+v", err)
 		return nil, nil, fiber.ErrInternalServerError
 	}
 
@@ -758,12 +758,12 @@ func (u *authUseCase) AccessTokenRequest(ctx context.Context, refreshToken strin
 	if time.Until(refreshTokenDetail.ExpiresAt) < time.Hour*24 {
 		newRefreshTokenDetail, err := u.jwtAdapter.GenerateRefreshToken(user.Id)
 		if err != nil {
-			log.Print("failed to generate refresh token : %+v", err)
+			log.Printf("failed to generate refresh token : %+v", err)
 			return nil, nil, fiber.ErrInternalServerError
 		}
 
 		if err := u.cacheAdapter.Set(ctx, newRefreshTokenDetail.Token, user.Id, time.Until(refreshTokenDetail.ExpiresAt)); err != nil {
-			log.Print("failed to save refresh token to cache : %+v", err)
+			log.Printf("failed to save refresh token to cache : %+v", err)
 			return nil, nil, fiber.ErrInternalServerError
 		}
 
