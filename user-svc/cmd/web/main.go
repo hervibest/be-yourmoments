@@ -31,7 +31,7 @@ func webServer() error {
 
 	serverConfig := config.NewServerConfig()
 	dbConfig := config.NewDB()
-	// minioConfig := config.NewMinio()
+	minioConfig := config.NewMinio()
 	redisConfig := config.NewRedisClient()
 
 	registry, err := consul.NewRegistry(serverConfig.ConsulAddr, serverConfig.Name)
@@ -105,6 +105,7 @@ func webServer() error {
 	googleTokenAdapter := adapter.NewGoogleTokenAdapter()
 	jwtAdapter := adapter.NewJWTAdapter()
 	securityAdapter := adapter.NewSecurityAdapter()
+	uploadAdapter := adapter.NewUploadAdapter(minioConfig)
 	customValidator := helper.NewCustomValidator()
 
 	logs.Log(fmt.Sprintf("Succsess connected http service at port: %v", serverConfig.HTTP))
@@ -126,16 +127,24 @@ func webServer() error {
 		log.Fatalf(err.Error())
 	}
 
+	userImageRepository, err := repository.NewUserImageRepository(dbConfig)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
 	authUseCase := usecase.NewAuthUseCase(dbConfig, userRepository, userProfileRepository, emailVerificationRepository, resetPasswordRepository,
 		googleTokenAdapter, emailAdapter, jwtAdapter, securityAdapter, cacheAdapter)
+	userUseCase := usecase.NewUserUseCase(dbConfig, userRepository, userProfileRepository, userImageRepository, uploadAdapter)
 
 	authController := http.NewAuthController(authUseCase, customValidator)
+	userController := http.NewUserController(userUseCase, customValidator)
 
 	authMiddleware := middleware.NewUserAuth(authUseCase, customValidator)
 
 	routeConfig := route.RouteConfig{
 		App:            app,
 		AuthController: authController,
+		UserController: userController,
 		AuthMiddleware: authMiddleware,
 	}
 
