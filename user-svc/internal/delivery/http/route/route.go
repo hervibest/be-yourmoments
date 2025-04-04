@@ -9,6 +9,7 @@ import (
 type RouteConfig struct {
 	App            *fiber.App
 	AuthController http.AuthController
+	UserController http.UserController
 	AuthMiddleware fiber.Handler
 }
 

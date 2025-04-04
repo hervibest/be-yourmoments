@@ -216,10 +216,12 @@ func (u *authUseCase) RegisterByGoogleSignIn(ctx context.Context, request *model
 			Id:     ulid.Make().String(),
 			UserId: user.Id,
 			// BirthDate: request.BirthDate,
-			Nickname:   helper.GenerateNickname(),
-			ProfileUrl: claims.ProfilePictureUrl,
-			CreatedAt:  &now,
-			UpdatedAt:  &now,
+			Nickname: helper.GenerateNickname(),
+			ProfileUrl: sql.NullString{
+				String: claims.ProfilePictureUrl,
+			},
+			CreatedAt: &now,
+			UpdatedAt: &now,
 		}
 
 		_, err = u.userProfileRepository.CreateWithProfileUrl(ctx, tx, userProfile)
