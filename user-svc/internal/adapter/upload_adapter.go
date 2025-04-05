@@ -15,7 +15,7 @@ import (
 type UploadAdapter interface {
 	UploadFile(ctx context.Context, file *multipart.FileHeader, uploadFile multipart.File, path string) (*model.MinioFileResponse, error)
 	DeleteFile(ctx context.Context, fileName string) (bool, error)
-	GetPresignedUrl(ctx context.Context, fileName, fileKey string) (string, error)
+	GetPresignedUrl(ctx context.Context, fileKey string) (string, error)
 }
 
 type uploadAdapter struct {
@@ -75,7 +75,7 @@ func (a *uploadAdapter) DeleteFile(ctx context.Context, fileName string) (bool, 
 	return true, nil
 }
 
-func (a *uploadAdapter) GetPresignedUrl(ctx context.Context, fileName, fileKey string) (string, error) {
+func (a *uploadAdapter) GetPresignedUrl(ctx context.Context, fileKey string) (string, error) {
 	fileURL, err := a.minio.MinioClient.PresignedGetObject(ctx, a.minio.GetBucketName(), fileKey, 1*time.Hour, nil)
 	if err != nil {
 		a.minio.Logs.Error("failed to generate presigned URL:" + err.Error())

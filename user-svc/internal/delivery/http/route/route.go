@@ -10,6 +10,7 @@ type RouteConfig struct {
 	App            *fiber.App
 	AuthController http.AuthController
 	UserController http.UserController
+	ChatController http.ChatController
 	AuthMiddleware fiber.Handler
 }
 

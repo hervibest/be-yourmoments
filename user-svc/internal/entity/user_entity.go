@@ -33,3 +33,9 @@ func (u *User) HasPhoneNumber() bool {
 func (u *User) HasVerifiedPhoneNumber() bool {
 	return u.PhoneNumberVerifiedAt != nil
 }
+
+type UserPublicChat struct {
+	Id       string         `db:"id"`
+	Username string         `db:"username"`
+	FileKey  sql.NullString `db:"file_key"`
+}

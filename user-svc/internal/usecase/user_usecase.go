@@ -74,11 +74,11 @@ func (u *userUseCase) getUserImageUrl(ctx context.Context, userImages *[]*entity
 
 	for _, userImage := range *userImages {
 		if userImage.ImageType == enum.ImageTypeProfile {
-			profileUrl, err = u.uploadAdapter.GetPresignedUrl(ctx, userImage.FileName, userImage.FileKey)
+			profileUrl, err = u.uploadAdapter.GetPresignedUrl(ctx, userImage.FileKey)
 			if err != nil {
 			}
 		} else if userImage.ImageType == enum.ImageTypeCover {
-			coverUrl, err = u.uploadAdapter.GetPresignedUrl(ctx, userImage.FileName, userImage.FileKey)
+			coverUrl, err = u.uploadAdapter.GetPresignedUrl(ctx, userImage.FileKey)
 			if err != nil {
 			}
 		}

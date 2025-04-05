@@ -10,4 +10,13 @@ func (c *RouteConfig) SetupUserRoute() {
 	userRoutes.Put("/profile", c.UserController.UpdateUserProfile)
 	userRoutes.Patch("/profile/:userProfId", c.UserController.UpdateUserProfileImage)
 	userRoutes.Patch("/profile/cover/:userProfId", c.UserController.UpdateUserCoverImage)
+
+	userRoutes.Post("/message", c.UserController.GetUserProfile)
+
+	// userRoutes.Get("/users", listUsers)
+	userRoutes.Post("/room", c.ChatController.GetOrCreateRoom)
+	userRoutes.Get("/token/:uid", c.ChatController.GetCustomToken)
+	userRoutes.Post("/send-message", c.ChatController.SendMessage)
+	// userRoutes.Post("/send-notification", sendNotification) // route baru untuk FCM
+
 }
