@@ -2,9 +2,13 @@ package repository
 
 import (
 	"be-yourmoments/user-svc/internal/entity"
+	"be-yourmoments/user-svc/internal/helper"
+	"be-yourmoments/user-svc/internal/model"
 	"context"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -92,6 +96,7 @@ type UserRepository interface {
 	FindById(ctx context.Context, userId string) (*entity.User, error)
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 	FindByMultipleParam(ctx context.Context, multipleParam string) (*entity.User, error)
+	FindAllPublicChat(ctx context.Context, tx Querier, page, size int, username string) ([]*entity.UserPublicChat, *model.PageMetadata, error)
 
 	UpdateEmailVerifiedAt(ctx context.Context, tx Querier, user *entity.User) (*entity.User, error)
 	UpdatePassword(ctx context.Context, tx Querier, user *entity.User) (*entity.User, error)
@@ -266,7 +271,6 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*entity
 
 	row := r.userPreparedStmt.findByEmail.QueryRowxContext(ctx, email)
 	if err := row.StructScan(user); err != nil {
-
 		return nil, err
 	}
 
@@ -283,6 +287,71 @@ func (r *userRepository) FindByMultipleParam(ctx context.Context, multipleParam 
 	}
 
 	return user, nil
+}
+
+func (r *userRepository) FindAllPublicChat(ctx context.Context, tx Querier, page, size int, username string) ([]*entity.UserPublicChat, *model.PageMetadata, error) {
+	results := make([]*entity.UserPublicChat, 0)
+
+	var totalItems int
+	countQuery := `SELECT COUNT(*) from users 
+	JOIN public.user_profiles  up on users.id = up.user_id 
+	JOIN public.user_images ui on up.id = ui.user_profile_id 
+	WHERE image_type = 'PROFILE'; `
+
+	var countArgs []interface{}
+
+	query := `SELECT users.id as user_id, username, ui.file_key from users 
+	JOIN public.user_profiles  up on users.id = up.user_id 
+	JOIN public.user_images ui on up.id = ui.user_profile_id 
+	WHERE image_type = 'PROFILE'; `
+
+	var queryArgs []interface{}
+
+	var conditions []string
+	var args []interface{}
+	argIndex := 1
+
+	if username != "" {
+		conditions = append(conditions, "username LIKE $"+strconv.Itoa(argIndex))
+		args = append(args, "%"+username+"%")
+		argIndex++
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+		countQuery += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	if err := tx.GetContext(ctx, &totalItems, countQuery, countArgs...); err != nil {
+		return nil, nil, err
+	}
+
+	pageMetadata := helper.CalculatePagination(int64(totalItems), page, size)
+
+	query += " LIMIT $" + strconv.Itoa(argIndex) + " OFFSET $" + strconv.Itoa(argIndex+1)
+	queryArgs = append(queryArgs, pageMetadata.Size, pageMetadata.Offset)
+
+	rows, err := tx.QueryxContext(ctx, query, queryArgs...)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		result := new(entity.UserPublicChat)
+		if err := rows.StructScan(result); err != nil {
+			log.Println(err)
+			return nil, nil, err
+		}
+		results = append(results, result)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Println(err)
+		return nil, nil, err
+	}
+
+	return results, pageMetadata, nil
 }
 
 func (r *userRepository) UpdateEmailVerifiedAt(ctx context.Context, tx Querier, user *entity.User) (*entity.User, error) {
